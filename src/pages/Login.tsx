@@ -8,7 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Bus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+
+// Admin credentials
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "zippytrip123";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -16,7 +19,6 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +26,11 @@ const Login = () => {
     // Clear previous errors
     setError("");
     
-    // Use the login function from AuthContext
-    const loginSuccess = login(username, password);
-    
-    if (loginSuccess) {
+    // Validate credentials
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      // Set auth state in localStorage
+      localStorage.setItem("isAuthenticated", "true");
+      
       // Show success toast
       toast({
         title: "Login successful",

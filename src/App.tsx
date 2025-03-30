@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route as RouterRoute, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import RoutesPage from "./pages/Routes";
@@ -37,27 +37,27 @@ const AppRoutes = () => {
   
   return (
     <Routes>
-      <RouterRoute path="/login" element={
+      <Route path="/login" element={
         isAuthenticated ? <Navigate to="/" replace /> : <Login />
       } />
       
-      <RouterRoute path="/" element={
+      <Route path="/" element={
         <ProtectedRoute>
           <Layout />
         </ProtectedRoute>
       }>
-        <RouterRoute index element={<Dashboard />} />
-        <RouterRoute path="routes" element={<RoutesPage />} />
-        <RouterRoute path="routes/add" element={<AddRoute />} />
-        <RouterRoute path="routes/:id" element={<RouteDetail />} />
-        <RouterRoute path="routes/edit/:id" element={<EditRoute />} />
-        <RouterRoute path="schedule" element={<Schedule />} />
-        <RouterRoute path="fleet" element={<Fleet />} />
-        <RouterRoute path="analytics" element={<Analytics />} />
-        <RouterRoute path="settings" element={<Settings />} />
-      </RouterRoute>
+        <Route index element={<Dashboard />} />
+        <Route path="routes" element={<RoutesPage />} />
+        <Route path="routes/add" element={<AddRoute />} />
+        <Route path="routes/:id" element={<RouteDetail />} />
+        <Route path="routes/edit/:id" element={<EditRoute />} />
+        <Route path="schedule" element={<Schedule />} />
+        <Route path="fleet" element={<Fleet />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
       
-      <RouterRoute path="*" element={<NotFound />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

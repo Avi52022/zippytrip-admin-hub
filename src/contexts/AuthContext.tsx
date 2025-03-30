@@ -1,97 +1,52 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  jobTitle?: string;
-  bio?: string;
-}
-
-interface AuthContextType {
+type AuthContextType = {
   isAuthenticated: boolean;
-  user: User | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  updateUserProfile: (userData: Partial<User>) => void;
-}
+};
 
-const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  user: null,
-  login: () => false,
-  logout: () => {},
-  updateUserProfile: () => {},
-});
-
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const stored = localStorage.getItem("auth");
-    return stored ? JSON.parse(stored).isAuthenticated : false;
-  });
-  
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem("auth");
-    return stored ? JSON.parse(stored).user : null;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const login = (username: string, password: string): boolean => {
-    // For demo purposes - in a real app this would be a proper auth check
-    if (username === "admin" && password === "admin") {
-      const userData = {
-        id: "1",
-        username: "admin",
-        email: "admin@zippytrip.com",
-        firstName: "Admin",
-        lastName: "User",
-        phone: "+1 (555) 123-4567",
-        jobTitle: "Fleet Manager",
-        bio: "I manage the fleet operations and route scheduling for ZippyTrip"
-      };
-      
-      setUser(userData);
+  // Check if user is authenticated on component mount
+  useEffect(() => {
+    const authStatus = localStorage.getItem("isAuthenticated");
+    if (authStatus === "true") {
       setIsAuthenticated(true);
-      
-      // Store in localStorage
-      localStorage.setItem("auth", JSON.stringify({
-        isAuthenticated: true,
-        user: userData
-      }));
-      
+    }
+  }, []);
+
+  // Login function
+  const login = (username: string, password: string): boolean => {
+    if (username === "admin" && password === "zippytrip123") {
+      localStorage.setItem("isAuthenticated", "true");
+      setIsAuthenticated(true);
       return true;
     }
-    
     return false;
   };
 
+  // Logout function
   const logout = () => {
-    setUser(null);
+    localStorage.removeItem("isAuthenticated");
     setIsAuthenticated(false);
-    localStorage.removeItem("auth");
-  };
-
-  const updateUserProfile = (userData: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-      
-      // Update localStorage
-      localStorage.setItem("auth", JSON.stringify({
-        isAuthenticated,
-        user: updatedUser
-      }));
-    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, updateUserProfile }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };
