@@ -39,7 +39,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 // Initial mock data for routes
 const initialRoutesData = [
@@ -313,8 +313,10 @@ const Routes = () => {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem className="cursor-pointer focus:bg-zippy-gray focus:text-white">
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>Edit</span>
+                            <Link to={`/routes/edit/${route.id}`} className="flex items-center w-full">
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 

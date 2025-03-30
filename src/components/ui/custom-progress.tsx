@@ -1,6 +1,7 @@
 
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface CustomProgressProps {
   value: number;
@@ -9,6 +10,8 @@ interface CustomProgressProps {
 }
 
 const CustomProgress = ({ value, className, indicatorClassName }: CustomProgressProps) => {
+  const { theme } = useTheme();
+  
   // Create a style object for the progress indicator color
   const customStyles: React.CSSProperties = {};
   
@@ -22,10 +25,17 @@ const CustomProgress = ({ value, className, indicatorClassName }: CustomProgress
     }
   }
   
+  // Add theme-specific styling
+  const progressClass = cn(
+    "",
+    theme === "light" ? "bg-gray-200" : "",
+    className
+  );
+  
   return (
     <Progress 
       value={value} 
-      className={cn("", className)}
+      className={progressClass}
       // Apply styles directly to the component
       style={customStyles}
     />

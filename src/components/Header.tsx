@@ -1,5 +1,5 @@
 
-import { Bell, Search, User, Settings } from "lucide-react";
+import { Bell, Search, User, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,8 +11,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Header = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+    navigate("/login");
+  };
+
   return (
     <header className="border-b border-zippy-gray p-4 flex items-center justify-between bg-zippy-darkGray">
       <div className="flex items-center md:w-72">
@@ -26,6 +45,15 @@ const Header = () => {
         </div>
       </div>
       <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <Moon className="h-4 w-4" />
+          <Switch 
+            checked={theme === "light"}
+            onCheckedChange={toggleTheme}
+          />
+          <Sun className="h-4 w-4" />
+        </div>
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="relative bg-zippy-gray border-none">
@@ -70,13 +98,13 @@ const Header = () => {
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
-              Log out
+            <DropdownMenuItem 
+              className="cursor-pointer text-destructive focus:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

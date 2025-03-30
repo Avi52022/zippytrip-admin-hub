@@ -3,11 +3,14 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Layout = () => {
+  const { theme } = useTheme();
+  
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full flex dark bg-zippy-dark">
+      <div className={`min-h-screen w-full flex ${theme === "dark" ? "dark bg-zippy-dark" : "light-mode"}`}>
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />

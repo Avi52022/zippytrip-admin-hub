@@ -111,6 +111,61 @@
   ::-webkit-scrollbar-thumb:hover {
     background: theme('colors.zippy.purple');
   }
+  
+  /* Light mode styles */
+  :root.light-mode {
+    color-scheme: light;
+  }
+
+  .light-mode {
+    /* Main backgrounds */
+    --zippy-dark: #f8f9fa;
+    --zippy-darker: #f0f2f5;
+    --zippy-darkGray: #ffffff;
+    --zippy-gray: #edf0f5;
+    --zippy-lightGray: #d8dde6;
+
+    /* Colors */
+    background-color: var(--zippy-dark);
+    color: #333;
+  }
+  
+  .light-mode .bg-zippy-dark {
+    background-color: var(--zippy-dark);
+  }
+  
+  .light-mode .bg-zippy-darker {
+    background-color: var(--zippy-darker);
+  }
+  
+  .light-mode .bg-zippy-darkGray {
+    background-color: var(--zippy-darkGray);
+  }
+  
+  .light-mode .bg-zippy-gray {
+    background-color: var(--zippy-gray);
+  }
+  
+  .light-mode .bg-zippy-lightGray {
+    background-color: var(--zippy-lightGray);
+  }
+  
+  .light-mode .border-zippy-gray {
+    border-color: var(--zippy-lightGray);
+  }
+  
+  /* Scrollbar for light mode */
+  .light-mode ::-webkit-scrollbar-track {
+    background: #f0f2f5;
+  }
+  
+  .light-mode ::-webkit-scrollbar-thumb {
+    background: #d8dde6;
+  }
+  
+  .light-mode ::-webkit-scrollbar-thumb:hover {
+    background: #8B5CF6;
+  }
 }
 
 @layer utilities {
