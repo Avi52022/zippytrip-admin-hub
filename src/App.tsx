@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Route as RouterRoute, Routes, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import RoutesPage from "./pages/Routes";
@@ -16,7 +16,6 @@ import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
 import EditRoute from "./pages/EditRoute";
 
 const queryClient = new QueryClient();
@@ -37,27 +36,27 @@ const AppRoutes = () => {
   
   return (
     <Routes>
-      <Route path="/login" element={
+      <RouterRoute path="/login" element={
         isAuthenticated ? <Navigate to="/" replace /> : <Login />
       } />
       
-      <Route path="/" element={
+      <RouterRoute path="/" element={
         <ProtectedRoute>
           <Layout />
         </ProtectedRoute>
       }>
-        <Route index element={<Dashboard />} />
-        <Route path="routes" element={<RoutesPage />} />
-        <Route path="routes/add" element={<AddRoute />} />
-        <Route path="routes/:id" element={<RouteDetail />} />
-        <Route path="routes/edit/:id" element={<EditRoute />} />
-        <Route path="schedule" element={<Schedule />} />
-        <Route path="fleet" element={<Fleet />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
+        <RouterRoute index element={<Dashboard />} />
+        <RouterRoute path="routes" element={<RoutesPage />} />
+        <RouterRoute path="routes/add" element={<AddRoute />} />
+        <RouterRoute path="routes/:id" element={<RouteDetail />} />
+        <RouterRoute path="routes/edit/:id" element={<EditRoute />} />
+        <RouterRoute path="schedule" element={<Schedule />} />
+        <RouterRoute path="fleet" element={<Fleet />} />
+        <RouterRoute path="analytics" element={<Analytics />} />
+        <RouterRoute path="settings" element={<Settings />} />
+      </RouterRoute>
       
-      <Route path="*" element={<NotFound />} />
+      <RouterRoute path="*" element={<NotFound />} />
     </Routes>
   );
 };
@@ -65,15 +64,13 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
