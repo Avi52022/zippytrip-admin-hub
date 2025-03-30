@@ -12,7 +12,8 @@ import {
   Route as RouteIcon,
   Bus,
   Users,
-  CheckCircle2
+  CheckCircle2,
+  BarChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

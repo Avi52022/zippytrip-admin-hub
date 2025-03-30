@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { 
   BarChart, 
@@ -56,7 +55,6 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 
-// Mock data for fleet management
 const busData = [
   {
     id: "BUS001",
@@ -374,8 +372,7 @@ const Fleet = () => {
                           <div className="flex items-center space-x-2">
                             <Progress 
                               value={bus.condition} 
-                              className="h-2 w-16"
-                              indicatorClassName={getProgressColor(bus.condition)}
+                              className={`h-2 w-16 ${getProgressColor(bus.condition)}`}
                             />
                             <span className={getConditionColor(bus.condition)}>
                               {bus.condition}%
