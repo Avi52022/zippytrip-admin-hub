@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   Bus, 
@@ -38,9 +39,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 
-// Mock data for routes
-const routesData = [
+// Initial mock data for routes
+const initialRoutesData = [
   {
     id: "R001",
     name: "Delhi to Mumbai Express",
@@ -109,6 +111,44 @@ const routesData = [
 ];
 
 const Routes = () => {
+  const [routesData, setRoutesData] = useState(() => {
+    // Check if we have routes in localStorage
+    const savedRoutes = localStorage.getItem('busRoutes');
+    return savedRoutes ? JSON.parse(savedRoutes) : initialRoutesData;
+  });
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+
+  // Filter routes based on search term
+  const filteredRoutes = routesData.filter(route => 
+    route.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    route.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    route.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    route.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Stats calculation
+  const activeRoutes = routesData.filter(route => route.status === "active").length;
+  const maintenanceRoutes = routesData.filter(route => route.status === "maintenance").length;
+  const inactiveRoutes = routesData.filter(route => route.status === "inactive").length;
+
+  const handleDeleteRoute = (id) => {
+    const updatedRoutes = routesData.filter(route => route.id !== id);
+    setRoutesData(updatedRoutes);
+    localStorage.setItem('busRoutes', JSON.stringify(updatedRoutes));
+    
+    toast({
+      title: "Route deleted",
+      description: "The route has been deleted successfully.",
+    });
+  };
+
+  // Save routes to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('busRoutes', JSON.stringify(routesData));
+  }, [routesData]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -141,7 +181,7 @@ const Routes = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
+            <div className="text-2xl font-bold">{routesData.length}</div>
           </CardContent>
         </Card>
         
@@ -155,7 +195,7 @@ const Routes = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">20</div>
+            <div className="text-2xl font-bold">{activeRoutes}</div>
           </CardContent>
         </Card>
         
@@ -169,7 +209,7 @@ const Routes = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{maintenanceRoutes}</div>
           </CardContent>
         </Card>
         
@@ -183,7 +223,7 @@ const Routes = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">{inactiveRoutes}</div>
           </CardContent>
         </Card>
       </div>
@@ -193,6 +233,8 @@ const Routes = () => {
           <Input 
             placeholder="Search routes..." 
             className="bg-zippy-darkGray border-zippy-gray pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         </div>
@@ -216,7 +258,7 @@ const Routes = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {routesData.map((route) => (
+                {filteredRoutes.map((route) => (
                   <TableRow key={route.id} className="border-b border-zippy-gray">
                     <TableCell className="font-medium">{route.id}</TableCell>
                     <TableCell>{route.name}</TableCell>
@@ -275,7 +317,10 @@ const Routes = () => {
                             <span>Edit</span>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                          <DropdownMenuItem 
+                            className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                            onClick={() => handleDeleteRoute(route.id)}
+                          >
                             <Trash2 className="mr-2 h-4 w-4" />
                             <span>Delete</span>
                           </DropdownMenuItem>

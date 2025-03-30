@@ -45,47 +45,166 @@ type StopType = {
   distanceFromStart: string;
 };
 
+interface RouteFormData {
+  id: string;
+  name: string;
+  source: string;
+  destination: string;
+  distance: string;
+  duration: string;
+  busType: string;
+  description: string;
+  stops: StopType[];
+  baseFare: string;
+  currency: string;
+  discount: string;
+  tax: string;
+  amenities: string[];
+  assignedBus: string;
+  specialNotes: string;
+  status: string;
+  nextDeparture: string;
+}
+
 const AddRoute = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [stops, setStops] = useState<StopType[]>([
-    {
-      id: "1",
-      name: "",
-      arrivalTime: "",
-      departureTime: "",
-      distanceFromStart: "",
-    },
-  ]);
-
-  const addStop = () => {
-    setStops([
-      ...stops,
+  
+  const [activeTab, setActiveTab] = useState("details");
+  
+  const [formData, setFormData] = useState<RouteFormData>({
+    id: "",
+    name: "",
+    source: "",
+    destination: "",
+    distance: "",
+    duration: "",
+    busType: "",
+    description: "",
+    stops: [
       {
-        id: Date.now().toString(),
+        id: "1",
         name: "",
         arrivalTime: "",
         departureTime: "",
-        distanceFromStart: "",
+        distanceFromStart: "0",
       },
-    ]);
-  };
+    ],
+    baseFare: "",
+    currency: "usd",
+    discount: "",
+    tax: "",
+    amenities: [],
+    assignedBus: "",
+    specialNotes: "",
+    status: "active",
+    nextDeparture: "Tomorrow, 08:00 AM",
+  });
 
-  const removeStop = (id: string) => {
-    if (stops.length === 1) return;
-    setStops(stops.filter((stop) => stop.id !== id));
+  const updateFormData = (field: keyof RouteFormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateStop = (id: string, field: keyof StopType, value: string) => {
-    setStops(
-      stops.map((stop) =>
+    setFormData((prev) => ({
+      ...prev,
+      stops: prev.stops.map((stop) =>
         stop.id === id ? { ...stop, [field]: value } : stop
-      )
-    );
+      ),
+    }));
+  };
+
+  const addStop = () => {
+    setFormData((prev) => ({
+      ...prev,
+      stops: [
+        ...prev.stops,
+        {
+          id: Date.now().toString(),
+          name: "",
+          arrivalTime: "",
+          departureTime: "",
+          distanceFromStart: "",
+        },
+      ],
+    }));
+  };
+
+  const removeStop = (id: string) => {
+    if (formData.stops.length === 1) return;
+    setFormData((prev) => ({
+      ...prev,
+      stops: prev.stops.filter((stop) => stop.id !== id),
+    }));
+  };
+
+  const toggleAmenity = (amenity: string) => {
+    setFormData((prev) => {
+      const amenities = [...prev.amenities];
+      if (amenities.includes(amenity)) {
+        return {
+          ...prev,
+          amenities: amenities.filter((a) => a !== amenity),
+        };
+      } else {
+        return {
+          ...prev,
+          amenities: [...amenities, amenity],
+        };
+      }
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.id || !formData.name || !formData.source || !formData.destination) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Get existing routes from localStorage
+    const existingRoutesJson = localStorage.getItem('busRoutes');
+    const existingRoutes = existingRoutesJson ? JSON.parse(existingRoutesJson) : [];
+    
+    // Check for duplicate route ID
+    const isDuplicate = existingRoutes.some((route: any) => route.id === formData.id);
+    if (isDuplicate) {
+      toast({
+        title: "Duplicate Route ID",
+        description: `Route with ID ${formData.id} already exists. Please use a different ID.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Prepare route data
+    const newRoute = {
+      id: formData.id,
+      name: formData.name,
+      source: formData.source,
+      destination: formData.destination,
+      distance: `${formData.distance} km`,
+      duration: formData.duration,
+      stops: formData.stops.length - 1, // Exclude source as it's not a stop
+      fare: `$${formData.baseFare}`,
+      status: formData.status,
+      busType: formData.busType,
+      nextDeparture: formData.nextDeparture,
+      // Include other data as needed
+      description: formData.description,
+      amenities: formData.amenities,
+      assignedBus: formData.assignedBus,
+    };
+    
+    // Save to localStorage
+    const updatedRoutes = [...existingRoutes, newRoute];
+    localStorage.setItem('busRoutes', JSON.stringify(updatedRoutes));
     
     toast({
       title: "Route created successfully",
@@ -112,15 +231,20 @@ const AddRoute = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="details" className="space-y-6">
+      <Tabs 
+        defaultValue="details" 
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="bg-zippy-gray">
           <TabsTrigger value="details">Route Details</TabsTrigger>
           <TabsTrigger value="stops">Stops & Schedule</TabsTrigger>
           <TabsTrigger value="pricing">Pricing & Amenities</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details">
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
+          <TabsContent value="details">
             <Card className="bg-zippy-darkGray border-zippy-gray">
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
@@ -136,6 +260,8 @@ const AddRoute = () => {
                       id="routeName"
                       placeholder="e.g. Delhi to Mumbai Express"
                       className="bg-zippy-gray border-zippy-lightGray"
+                      value={formData.name}
+                      onChange={(e) => updateFormData("name", e.target.value)}
                       required
                     />
                   </div>
@@ -145,6 +271,8 @@ const AddRoute = () => {
                       id="routeId"
                       placeholder="e.g. RT001"
                       className="bg-zippy-gray border-zippy-lightGray"
+                      value={formData.id}
+                      onChange={(e) => updateFormData("id", e.target.value)}
                       required
                     />
                   </div>
@@ -156,6 +284,8 @@ const AddRoute = () => {
                         id="source"
                         placeholder="Starting point"
                         className="bg-zippy-gray border-zippy-lightGray pl-9"
+                        value={formData.source}
+                        onChange={(e) => updateFormData("source", e.target.value)}
                         required
                       />
                     </div>
@@ -168,6 +298,8 @@ const AddRoute = () => {
                         id="destination"
                         placeholder="End point"
                         className="bg-zippy-gray border-zippy-lightGray pl-9"
+                        value={formData.destination}
+                        onChange={(e) => updateFormData("destination", e.target.value)}
                         required
                       />
                     </div>
@@ -179,6 +311,8 @@ const AddRoute = () => {
                       type="number"
                       placeholder="e.g. 500"
                       className="bg-zippy-gray border-zippy-lightGray"
+                      value={formData.distance}
+                      onChange={(e) => updateFormData("distance", e.target.value)}
                       required
                     />
                   </div>
@@ -192,6 +326,8 @@ const AddRoute = () => {
                         id="estimatedDuration"
                         placeholder="e.g. 8h 30m"
                         className="bg-zippy-gray border-zippy-lightGray pl-9"
+                        value={formData.duration}
+                        onChange={(e) => updateFormData("duration", e.target.value)}
                         required
                       />
                     </div>
@@ -200,7 +336,10 @@ const AddRoute = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="busType">Bus Type</Label>
-                  <Select>
+                  <Select 
+                    value={formData.busType} 
+                    onValueChange={(value) => updateFormData("busType", value)}
+                  >
                     <SelectTrigger className="bg-zippy-gray border-zippy-lightGray">
                       <SelectValue placeholder="Select bus type" />
                     </SelectTrigger>
@@ -220,6 +359,8 @@ const AddRoute = () => {
                     id="description"
                     placeholder="Provide details about this route"
                     className="min-h-32 bg-zippy-gray border-zippy-lightGray"
+                    value={formData.description}
+                    onChange={(e) => updateFormData("description", e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -228,336 +369,341 @@ const AddRoute = () => {
                   variant="outline"
                   onClick={() => navigate("/routes")}
                   className="bg-zippy-gray hover:bg-zippy-lightGray"
+                  type="button"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => {
-                    document.querySelector('[data-value="stops"]')?.dispatchEvent(
-                      new MouseEvent('click', { bubbles: true })
-                    );
-                  }}
+                  onClick={() => setActiveTab("stops")}
                   className="bg-zippy-purple hover:bg-zippy-darkPurple"
                 >
                   Next: Stops & Schedule
                 </Button>
               </CardFooter>
             </Card>
-          </form>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="stops">
-          <Card className="bg-zippy-darkGray border-zippy-gray">
-            <CardHeader>
-              <CardTitle>Stops & Schedule</CardTitle>
-              <CardDescription>
-                Add all stops along the route with arrival and departure times
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                {stops.map((stop, index) => (
-                  <div
-                    key={stop.id}
-                    className="p-4 border border-zippy-gray rounded-md space-y-4"
-                  >
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">
-                        {index === 0
-                          ? "Source Point"
-                          : index === stops.length - 1
-                          ? "Destination Point"
-                          : `Stop ${index}`}
-                      </h3>
-                      {stops.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeStop(stop.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100/10"
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`stop-name-${stop.id}`}>
-                          Stop Name
-                        </Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id={`stop-name-${stop.id}`}
-                            value={stop.name}
-                            onChange={(e) =>
-                              updateStop(stop.id, "name", e.target.value)
-                            }
-                            placeholder="Location name"
-                            className="bg-zippy-gray border-zippy-lightGray pl-9"
-                            required
-                          />
-                        </div>
+          <TabsContent value="stops">
+            <Card className="bg-zippy-darkGray border-zippy-gray">
+              <CardHeader>
+                <CardTitle>Stops & Schedule</CardTitle>
+                <CardDescription>
+                  Add all stops along the route with arrival and departure times
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {formData.stops.map((stop, index) => (
+                    <div
+                      key={stop.id}
+                      className="p-4 border border-zippy-gray rounded-md space-y-4"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">
+                          {index === 0
+                            ? "Source Point"
+                            : index === formData.stops.length - 1
+                            ? "Destination Point"
+                            : `Stop ${index}`}
+                        </h3>
+                        {formData.stops.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeStop(stop.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-100/10"
+                          >
+                            Remove
+                          </Button>
+                        )}
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`arrival-time-${stop.id}`}>
-                          Arrival Time
-                        </Label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor={`stop-name-${stop.id}`}>
+                            Stop Name
+                          </Label>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id={`stop-name-${stop.id}`}
+                              value={stop.name}
+                              onChange={(e) =>
+                                updateStop(stop.id, "name", e.target.value)
+                              }
+                              placeholder="Location name"
+                              className="bg-zippy-gray border-zippy-lightGray pl-9"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`arrival-time-${stop.id}`}>
+                            Arrival Time
+                          </Label>
+                          <div className="relative">
+                            <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id={`arrival-time-${stop.id}`}
+                              type="time"
+                              value={stop.arrivalTime}
+                              onChange={(e) =>
+                                updateStop(
+                                  stop.id,
+                                  "arrivalTime",
+                                  e.target.value
+                                )
+                              }
+                              className="bg-zippy-gray border-zippy-lightGray pl-9"
+                              required={index !== 0}
+                              disabled={index === 0}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`departure-time-${stop.id}`}>
+                            Departure Time
+                          </Label>
+                          <div className="relative">
+                            <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id={`departure-time-${stop.id}`}
+                              type="time"
+                              value={stop.departureTime}
+                              onChange={(e) =>
+                                updateStop(
+                                  stop.id,
+                                  "departureTime",
+                                  e.target.value
+                                )
+                              }
+                              className="bg-zippy-gray border-zippy-lightGray pl-9"
+                              required={index !== formData.stops.length - 1}
+                              disabled={index === formData.stops.length - 1}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`distance-${stop.id}`}>
+                            Distance from Start (km)
+                          </Label>
                           <Input
-                            id={`arrival-time-${stop.id}`}
-                            type="time"
-                            value={stop.arrivalTime}
+                            id={`distance-${stop.id}`}
+                            type="number"
+                            value={stop.distanceFromStart}
                             onChange={(e) =>
                               updateStop(
                                 stop.id,
-                                "arrivalTime",
+                                "distanceFromStart",
                                 e.target.value
                               )
                             }
-                            className="bg-zippy-gray border-zippy-lightGray pl-9"
-                            required={index !== 0}
+                            placeholder="e.g. 50"
+                            className="bg-zippy-gray border-zippy-lightGray"
+                            required
                             disabled={index === 0}
                           />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`departure-time-${stop.id}`}>
-                          Departure Time
-                        </Label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id={`departure-time-${stop.id}`}
-                            type="time"
-                            value={stop.departureTime}
-                            onChange={(e) =>
-                              updateStop(
-                                stop.id,
-                                "departureTime",
-                                e.target.value
-                              )
-                            }
-                            className="bg-zippy-gray border-zippy-lightGray pl-9"
-                            required={index !== stops.length - 1}
-                            disabled={index === stops.length - 1}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`distance-${stop.id}`}>
-                          Distance from Start (km)
-                        </Label>
-                        <Input
-                          id={`distance-${stop.id}`}
-                          type="number"
-                          value={stop.distanceFromStart}
-                          onChange={(e) =>
-                            updateStop(
-                              stop.id,
-                              "distanceFromStart",
-                              e.target.value
-                            )
-                          }
-                          placeholder="e.g. 50"
-                          className="bg-zippy-gray border-zippy-lightGray"
-                          required
-                          disabled={index === 0}
-                        />
-                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addStop}
+                  className="w-full border-dashed border-zippy-lightGray hover:border-zippy-purple hover:bg-zippy-darkPurple/10"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Another Stop
+                </Button>
+              </CardContent>
+              <CardFooter className="flex justify-between border-t border-zippy-gray pt-5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("details")}
+                  className="bg-zippy-gray hover:bg-zippy-lightGray"
+                >
+                  Back
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setActiveTab("pricing")}
+                  className="bg-zippy-purple hover:bg-zippy-darkPurple"
+                >
+                  Next: Pricing & Amenities
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pricing">
+            <Card className="bg-zippy-darkGray border-zippy-gray">
+              <CardHeader>
+                <CardTitle>Pricing & Amenities</CardTitle>
+                <CardDescription>
+                  Set fare details and available amenities for this route
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="baseFare">Base Fare</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="baseFare"
+                        type="number"
+                        placeholder="Base ticket price"
+                        className="bg-zippy-gray border-zippy-lightGray pl-9"
+                        value={formData.baseFare}
+                        onChange={(e) => updateFormData("baseFare", e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addStop}
-                className="w-full border-dashed border-zippy-lightGray hover:border-zippy-purple hover:bg-zippy-darkPurple/10"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Another Stop
-              </Button>
-            </CardContent>
-            <CardFooter className="flex justify-between border-t border-zippy-gray pt-5">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  document.querySelector('[data-value="details"]')?.dispatchEvent(
-                    new MouseEvent('click', { bubbles: true })
-                  );
-                }}
-                className="bg-zippy-gray hover:bg-zippy-lightGray"
-              >
-                Back
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  document.querySelector('[data-value="pricing"]')?.dispatchEvent(
-                    new MouseEvent('click', { bubbles: true })
-                  );
-                }}
-                className="bg-zippy-purple hover:bg-zippy-darkPurple"
-              >
-                Next: Pricing & Amenities
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="currencyType">Currency</Label>
+                    <Select 
+                      value={formData.currency}
+                      onValueChange={(value) => updateFormData("currency", value)}
+                    >
+                      <SelectTrigger className="bg-zippy-gray border-zippy-lightGray">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zippy-darkGray border-zippy-gray">
+                        <SelectItem value="usd">USD ($)</SelectItem>
+                        <SelectItem value="eur">EUR (€)</SelectItem>
+                        <SelectItem value="gbp">GBP (£)</SelectItem>
+                        <SelectItem value="inr">INR (₹)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-        <TabsContent value="pricing">
-          <Card className="bg-zippy-darkGray border-zippy-gray">
-            <CardHeader>
-              <CardTitle>Pricing & Amenities</CardTitle>
-              <CardDescription>
-                Set fare details and available amenities for this route
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="baseFare">Base Fare</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="discountPercentage">Discount (%)</Label>
                     <Input
-                      id="baseFare"
+                      id="discountPercentage"
                       type="number"
-                      placeholder="Base ticket price"
-                      className="bg-zippy-gray border-zippy-lightGray pl-9"
+                      placeholder="e.g. 10"
+                      className="bg-zippy-gray border-zippy-lightGray"
+                      value={formData.discount}
+                      onChange={(e) => updateFormData("discount", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="taxPercentage">Tax Rate (%)</Label>
+                    <Input
+                      id="taxPercentage"
+                      type="number"
+                      placeholder="e.g. 8"
+                      className="bg-zippy-gray border-zippy-lightGray"
+                      value={formData.tax}
+                      onChange={(e) => updateFormData("tax", e.target.value)}
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="currencyType">Currency</Label>
-                  <Select defaultValue="usd">
-                    <SelectTrigger className="bg-zippy-gray border-zippy-lightGray">
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                      <SelectItem value="usd">USD ($)</SelectItem>
-                      <SelectItem value="eur">EUR (€)</SelectItem>
-                      <SelectItem value="gbp">GBP (£)</SelectItem>
-                      <SelectItem value="inr">INR (₹)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="discountPercentage">Discount (%)</Label>
-                  <Input
-                    id="discountPercentage"
-                    type="number"
-                    placeholder="e.g. 10"
-                    className="bg-zippy-gray border-zippy-lightGray"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="taxPercentage">Tax Rate (%)</Label>
-                  <Input
-                    id="taxPercentage"
-                    type="number"
-                    placeholder="e.g. 8"
-                    className="bg-zippy-gray border-zippy-lightGray"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Available Amenities</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    "Wi-Fi",
-                    "AC",
-                    "USB Charging",
-                    "Snacks",
-                    "Water Bottle",
-                    "Blanket",
-                    "TV",
-                    "Restroom",
-                  ].map((amenity) => (
-                    <div
-                      key={amenity}
-                      className="flex items-center space-x-2 border border-zippy-lightGray rounded-md p-3 cursor-pointer hover:bg-zippy-lightGray/10 hover:border-zippy-purple transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        id={`amenity-${amenity}`}
-                        className="h-4 w-4 text-zippy-purple rounded"
-                      />
-                      <Label
-                        htmlFor={`amenity-${amenity}`}
-                        className="cursor-pointer"
+                  <Label>Available Amenities</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      "Wi-Fi",
+                      "AC",
+                      "USB Charging",
+                      "Snacks",
+                      "Water Bottle",
+                      "Blanket",
+                      "TV",
+                      "Restroom",
+                    ].map((amenity) => (
+                      <div
+                        key={amenity}
+                        className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer transition-colors ${
+                          formData.amenities.includes(amenity)
+                            ? "border-zippy-purple bg-zippy-purple/10"
+                            : "border-zippy-lightGray hover:bg-zippy-lightGray/10 hover:border-zippy-purple"
+                        }`}
+                        onClick={() => toggleAmenity(amenity)}
                       >
-                        {amenity}
-                      </Label>
-                    </div>
-                  ))}
+                        <input
+                          type="checkbox"
+                          id={`amenity-${amenity}`}
+                          checked={formData.amenities.includes(amenity)}
+                          onChange={() => toggleAmenity(amenity)}
+                          className="h-4 w-4 text-zippy-purple rounded"
+                        />
+                        <Label
+                          htmlFor={`amenity-${amenity}`}
+                          className="cursor-pointer"
+                        >
+                          {amenity}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="assignedBus">Assign Bus</Label>
-                <div className="relative">
-                  <Bus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Select>
-                    <SelectTrigger className="bg-zippy-gray border-zippy-lightGray pl-9">
-                      <SelectValue placeholder="Select a bus for this route" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                      <SelectItem value="bus001">Bus #001 - Luxury (48 seats)</SelectItem>
-                      <SelectItem value="bus002">Bus #002 - Sleeper (36 berths)</SelectItem>
-                      <SelectItem value="bus003">Bus #003 - Standard (56 seats)</SelectItem>
-                      <SelectItem value="bus004">Bus #004 - Deluxe (40 seats)</SelectItem>
-                      <SelectItem value="bus005">Bus #005 - AC Sleeper (32 berths)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="assignedBus">Assign Bus</Label>
+                  <div className="relative">
+                    <Bus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Select
+                      value={formData.assignedBus}
+                      onValueChange={(value) => updateFormData("assignedBus", value)}
+                    >
+                      <SelectTrigger className="bg-zippy-gray border-zippy-lightGray pl-9">
+                        <SelectValue placeholder="Select a bus for this route" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zippy-darkGray border-zippy-gray">
+                        <SelectItem value="bus001">Bus #001 - Luxury (48 seats)</SelectItem>
+                        <SelectItem value="bus002">Bus #002 - Sleeper (36 berths)</SelectItem>
+                        <SelectItem value="bus003">Bus #003 - Standard (56 seats)</SelectItem>
+                        <SelectItem value="bus004">Bus #004 - Deluxe (40 seats)</SelectItem>
+                        <SelectItem value="bus005">Bus #005 - AC Sleeper (32 berths)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="specialNotes">Special Notes</Label>
-                <Textarea
-                  id="specialNotes"
-                  placeholder="Any special information about pricing, amenities, or restrictions"
-                  className="min-h-32 bg-zippy-gray border-zippy-lightGray"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between border-t border-zippy-gray pt-5">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  document.querySelector('[data-value="stops"]')?.dispatchEvent(
-                    new MouseEvent('click', { bubbles: true })
-                  );
-                }}
-                className="bg-zippy-gray hover:bg-zippy-lightGray"
-              >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                onClick={handleSubmit}
-                className="bg-zippy-purple hover:bg-zippy-darkPurple"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Save Route
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+                <div className="space-y-2">
+                  <Label htmlFor="specialNotes">Special Notes</Label>
+                  <Textarea
+                    id="specialNotes"
+                    placeholder="Any special information about pricing, amenities, or restrictions"
+                    className="min-h-32 bg-zippy-gray border-zippy-lightGray"
+                    value={formData.specialNotes}
+                    onChange={(e) => updateFormData("specialNotes", e.target.value)}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between border-t border-zippy-gray pt-5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("stops")}
+                  className="bg-zippy-gray hover:bg-zippy-lightGray"
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-zippy-purple hover:bg-zippy-darkPurple"
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Route
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </form>
       </Tabs>
     </div>
   );
