@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { 
   Bell, 
   Check, 
@@ -46,8 +47,83 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Form validation schema
+const profileFormSchema = z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  jobTitle: z.string().optional(),
+  bio: z.string().optional()
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const Settings = () => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("profile");
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Default values for the form
+  const defaultValues: Partial<ProfileFormValues> = {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    jobTitle: user?.jobTitle || "Fleet Manager",
+    bio: user?.bio || ""
+  };
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues
+  });
+
+  const onSubmit = (data: ProfileFormValues) => {
+    // In a real app, you would save this to your backend
+    console.log("Form submitted", data);
+    
+    // Show success message
+    toast({
+      title: "Profile updated",
+      description: "Your profile information has been updated successfully.",
+    });
+  };
+
+  const handleImageUpload = () => {
+    setIsUploading(true);
+    // Simulate upload delay
+    setTimeout(() => {
+      setIsUploading(false);
+      toast({
+        title: "Image uploaded",
+        description: "Your profile picture has been updated successfully.",
+      });
+    }, 1500);
+  };
+
+  const handleImageRemove = () => {
+    toast({
+      title: "Image removed",
+      description: "Your profile picture has been removed.",
+    });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -56,14 +132,22 @@ const Settings = () => {
           <p className="text-muted-foreground mt-1">Manage your account settings and preferences</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">
+          <Button 
+            className="bg-zippy-purple hover:bg-zippy-darkPurple"
+            onClick={form.handleSubmit(onSubmit)}
+          >
             <Save className="mr-2 h-4 w-4" />
             Save Changes
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs 
+        defaultValue="profile" 
+        className="space-y-6"
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
         <TabsList className="bg-zippy-gray">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
@@ -83,62 +167,155 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-20 w-20 border-2 border-zippy-gray">
-                    <AvatarImage src="/placeholder.svg" />
-                    <AvatarFallback className="bg-zippy-purple text-white text-xl">OP</AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-2">
-                    <div className="flex space-x-2">
-                      <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </Button>
-                      <Button variant="outline" className="text-destructive bg-zippy-gray border-zippy-lightGray hover:bg-destructive hover:text-destructive-foreground">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Remove
-                      </Button>
+                <Form {...form}>
+                  <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-20 w-20 border-2 border-zippy-gray">
+                        <AvatarImage src="/placeholder.svg" />
+                        <AvatarFallback className="bg-zippy-purple text-white text-xl">
+                          {form.getValues("firstName")?.[0]}{form.getValues("lastName")?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-2">
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            className="bg-zippy-gray border-zippy-lightGray"
+                            onClick={handleImageUpload}
+                            disabled={isUploading}
+                            type="button"
+                          >
+                            <Upload className="mr-2 h-4 w-4" />
+                            {isUploading ? "Uploading..." : "Upload"}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="text-destructive bg-zippy-gray border-zippy-lightGray hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={handleImageRemove}
+                            type="button"
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Remove
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          JPG, PNG or GIF. Max size 2MB.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      JPG, PNG or GIF. Max size 2MB.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name">First name</Label>
-                    <Input id="first-name" placeholder="John" className="bg-zippy-darkGray border-zippy-gray" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last-name">Last name</Label>
-                    <Input id="last-name" placeholder="Doe" className="bg-zippy-darkGray border-zippy-gray" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input id="email" type="email" placeholder="john.doe@example.com" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone number</Label>
-                  <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="job-title">Job title</Label>
-                  <Input id="job-title" placeholder="Fleet Manager" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea 
-                    id="bio" 
-                    placeholder="I manage the fleet operations and route scheduling for ZippyTrip" 
-                    className="min-h-32 bg-zippy-darkGray border-zippy-gray"
-                  />
-                </div>
+                    
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="John" 
+                                className="bg-zippy-darkGray border-zippy-gray" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Doe" 
+                                className="bg-zippy-darkGray border-zippy-gray" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email address</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="email" 
+                              placeholder="john.doe@example.com" 
+                              className="bg-zippy-darkGray border-zippy-gray" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone number</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="tel" 
+                              placeholder="+1 (555) 000-0000" 
+                              className="bg-zippy-darkGray border-zippy-gray" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="jobTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Job title</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Fleet Manager" 
+                              className="bg-zippy-darkGray border-zippy-gray" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bio</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              {...field}
+                              placeholder="I manage the fleet operations and route scheduling for ZippyTrip" 
+                              className="min-h-32 bg-zippy-darkGray border-zippy-gray"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
               </CardContent>
             </Card>
             
@@ -166,12 +343,12 @@ const Settings = () => {
                 
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground">Member Since</div>
-                  <div className="font-medium">October 2022</div>
+                  <div className="font-medium">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</div>
                 </div>
                 
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground">Last Login</div>
-                  <div className="font-medium">Today, 9:42 AM</div>
+                  <div className="font-medium">Today, {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</div>
                 </div>
                 
                 <Separator className="bg-zippy-gray" />
@@ -179,15 +356,36 @@ const Settings = () => {
                 <div className="space-y-2">
                   <div className="text-sm font-medium">Actions</div>
                   <div className="flex flex-col space-y-2">
-                    <Button variant="outline" className="justify-start bg-zippy-gray border-zippy-lightGray">
+                    <Button 
+                      variant="outline" 
+                      className="justify-start bg-zippy-gray border-zippy-lightGray"
+                      onClick={() => setActiveTab("security")}
+                      type="button"
+                    >
                       <Lock className="mr-2 h-4 w-4" />
                       Change Password
                     </Button>
-                    <Button variant="outline" className="justify-start bg-zippy-gray border-zippy-lightGray">
+                    <Button 
+                      variant="outline" 
+                      className="justify-start bg-zippy-gray border-zippy-lightGray"
+                      onClick={() => setActiveTab("security")}
+                      type="button"
+                    >
                       <Shield className="mr-2 h-4 w-4" />
                       Two-Factor Authentication
                     </Button>
-                    <Button variant="outline" className="justify-start text-destructive bg-zippy-gray border-zippy-lightGray hover:bg-destructive hover:text-destructive-foreground">
+                    <Button 
+                      variant="outline" 
+                      className="justify-start text-destructive bg-zippy-gray border-zippy-lightGray hover:bg-destructive hover:text-destructive-foreground"
+                      type="button"
+                      onClick={() => {
+                        toast({
+                          variant: "destructive",
+                          title: "Are you sure?",
+                          description: "This action cannot be undone."
+                        });
+                      }}
+                    >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete Account
                     </Button>
