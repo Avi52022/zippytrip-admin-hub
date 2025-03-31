@@ -15,6 +15,7 @@ import AddRoute from "./pages/AddRoute";
 import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import Bookings from "./pages/Bookings";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import EditRoute from "./pages/EditRoute";
@@ -53,6 +54,7 @@ const AppRoutes = () => {
         <Route path="routes/edit/:id" element={<EditRoute />} />
         <Route path="schedule" element={<Schedule />} />
         <Route path="fleet" element={<Fleet />} />
+        <Route path="bookings" element={<Bookings />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="settings" element={<Settings />} />
       </Route>
