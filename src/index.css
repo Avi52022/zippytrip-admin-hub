@@ -153,6 +153,34 @@
   .light-mode .border-zippy-gray {
     border-color: var(--zippy-lightGray);
   }
+
+  /* Fix text colors in light mode */
+  .light-mode .text-white,
+  .light-mode .text-foreground {
+    color: #333;
+  }
+
+  .light-mode .text-muted-foreground {
+    color: #555;
+  }
+
+  /* Fix button text contrast in light mode */
+  .light-mode .bg-zippy-purple {
+    color: white;
+  }
+
+  /* Fix card text colors */
+  .light-mode .card {
+    color: #333;
+  }
+
+  /* Fix gradient text for light mode */
+  .light-mode .text-gradient {
+    background: linear-gradient(to right, #8B5CF6, #9B87F5);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
   
   /* Scrollbar for light mode */
   .light-mode ::-webkit-scrollbar-track {

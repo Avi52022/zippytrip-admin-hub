@@ -51,7 +51,7 @@ const Login = () => {
             </div>
           </div>
           <CardTitle className="text-2xl text-gradient">ZippyTrip Admin</CardTitle>
-          <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+          <CardDescription className="text-muted-foreground">Enter your credentials to access the dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -62,7 +62,7 @@ const Login = () => {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="text-foreground">Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -74,7 +74,7 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -85,7 +85,7 @@ const Login = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-zippy-purple hover:bg-zippy-darkPurple">
+            <Button type="submit" className="w-full bg-zippy-purple hover:bg-zippy-darkPurple text-white">
               Login
             </Button>
           </form>
