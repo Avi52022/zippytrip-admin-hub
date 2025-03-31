@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -189,68 +190,4 @@ export const processBooking = async (bookingData: {
     console.error('Error processing booking:', error);
     throw error;
   }
-};
-
-// Shared authentication functions for both admin and user apps
-export const getCurrentUser = async () => {
-  const { data, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return data.user;
-};
-
-export const getCurrentSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  return data.session;
-};
-
-export const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-  
-  if (error) throw error;
-  return data;
-};
-
-export const signUp = async (email: string, password: string, metadata?: any) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: metadata
-    }
-  });
-  
-  if (error) throw error;
-  return data;
-};
-
-export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-  return true;
-};
-
-// User profile functions
-export const getUserProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-  
-  if (error && error.code !== 'PGSQL_ERROR') throw error;
-  return data;
-};
-
-export const updateUserProfile = async (userId: string, profileData: any) => {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .upsert({ id: userId, ...profileData })
-    .select();
-  
-  if (error) throw error;
-  return data;
 };
