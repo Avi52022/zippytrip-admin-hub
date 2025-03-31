@@ -1,5 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+type Route = Database['public']['Tables']['routes']['Row'];
+type Bus = Database['public']['Tables']['buses']['Row'];
+type Schedule = Database['public']['Tables']['schedules']['Row'];
+type Booking = Database['public']['Tables']['bookings']['Row'];
 
 // Routes API
 export const fetchRoutes = async () => {
@@ -9,7 +15,7 @@ export const fetchRoutes = async () => {
     .order('name');
   
   if (error) throw error;
-  return data;
+  return data as Route[];
 };
 
 export const getRoute = async (id: string) => {
@@ -20,10 +26,10 @@ export const getRoute = async (id: string) => {
     .single();
   
   if (error) throw error;
-  return data;
+  return data as Route;
 };
 
-export const createRoute = async (routeData) => {
+export const createRoute = async (routeData: Partial<Route>) => {
   const { data, error } = await supabase
     .from('routes')
     .insert(routeData)
@@ -33,7 +39,7 @@ export const createRoute = async (routeData) => {
   return data;
 };
 
-export const updateRoute = async (id, routeData) => {
+export const updateRoute = async (id: string, routeData: Partial<Route>) => {
   const { data, error } = await supabase
     .from('routes')
     .update(routeData)
@@ -44,7 +50,7 @@ export const updateRoute = async (id, routeData) => {
   return data;
 };
 
-export const deleteRoute = async (id) => {
+export const deleteRoute = async (id: string) => {
   const { error } = await supabase
     .from('routes')
     .delete()
@@ -62,7 +68,7 @@ export const fetchBuses = async () => {
     .order('registration_number');
   
   if (error) throw error;
-  return data;
+  return data as Bus[];
 };
 
 // Schedules API
@@ -161,7 +167,13 @@ export const getUserBookings = async (userId: string) => {
   return data;
 };
 
-export const processBooking = async (bookingData) => {
+export const processBooking = async (bookingData: {
+  scheduleId: string;
+  userId: string;
+  seatNumbers: string[];
+  totalFare: number;
+  paymentMethod: string;
+}) => {
   const { scheduleId, userId, seatNumbers, totalFare, paymentMethod } = bookingData;
   
   try {

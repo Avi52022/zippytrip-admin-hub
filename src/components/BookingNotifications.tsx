@@ -12,17 +12,9 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Database } from '@/integrations/supabase/types';
 
-interface Booking {
-  id: string;
-  user_id: string;
-  schedule_id: string;
-  booking_date: string;
-  seat_numbers: string[];
-  total_fare: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
-  created_at: string;
+type BookingWithDetails = Database['public']['Tables']['bookings']['Row'] & {
   schedules?: {
     departure_time: string;
     arrival_time: string;
@@ -32,10 +24,10 @@ interface Booking {
       destination: string;
     };
   };
-}
+};
 
 const BookingNotifications = () => {
-  const [notifications, setNotifications] = useState<Booking[]>([]);
+  const [notifications, setNotifications] = useState<BookingWithDetails[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -114,7 +106,7 @@ const BookingNotifications = () => {
             });
 
             // Update notifications state
-            setNotifications(prev => [data, ...prev]);
+            setNotifications(prev => [data as BookingWithDetails, ...prev]);
             setUnreadCount(prev => prev + 1);
           } catch (error) {
             console.error('Error processing new booking notification:', error);
@@ -227,8 +219,8 @@ const BookingNotifications = () => {
                   
                   <div className="flex justify-between pt-2">
                     <div className="flex gap-2">
-                      {getStatusBadge(booking.status)}
-                      {getPaymentStatusBadge(booking.payment_status)}
+                      {getStatusBadge(booking.status || 'pending')}
+                      {getPaymentStatusBadge(booking.payment_status || 'pending')}
                     </div>
                   </div>
                 </div>

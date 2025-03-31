@@ -25,6 +25,7 @@ const Layout = () => {
         </div>
       </div>
       <Toaster />
+      <BookingNotifications />
     </SidebarProvider>
   );
 };
