@@ -11,42 +11,33 @@ import { AlertCircle, Bus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Clear previous errors
     setError("");
-    setIsLoading(true);
     
-    try {
-      // Use the login function from AuthContext and await its result
-      const success = await login(email, password);
+    // Use the login function from AuthContext
+    const success = login(username, password);
+    
+    if (success) {
+      // Show success toast
+      toast({
+        title: "Login successful",
+        description: "Welcome to ZippyTrip Admin Dashboard!",
+      });
       
-      if (success) {
-        // Show success toast
-        toast({
-          title: "Login successful",
-          description: "Welcome to ZippyTrip Admin Dashboard!",
-        });
-        
-        // Redirect to dashboard
-        navigate("/");
-      } else {
-        setError("Invalid email or password. Please try again.");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setError("An error occurred during login. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // Redirect to dashboard
+      navigate("/");
+    } else {
+      setError("Invalid username or password. Please try again.");
     }
   };
 
@@ -71,13 +62,13 @@ const Login = () => {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
+              <Label htmlFor="username" className="text-foreground">Username</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
                 className="bg-zippy-gray border-zippy-lightGray"
                 required
               />
@@ -94,12 +85,8 @@ const Login = () => {
                 required
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full bg-zippy-purple hover:bg-zippy-darkPurple text-white"
-              disabled={isLoading}
-            >
-              {isLoading ? "Logging in..." : "Login"}
+            <Button type="submit" className="w-full bg-zippy-purple hover:bg-zippy-darkPurple text-white">
+              Login
             </Button>
           </form>
         </CardContent>
