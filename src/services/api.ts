@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
 type Route = Database['public']['Tables']['routes']['Row'];
+type RouteInsert = Database['public']['Tables']['routes']['Insert'];
+type RouteUpdate = Database['public']['Tables']['routes']['Update'];
+
 type Bus = Database['public']['Tables']['buses']['Row'];
 type Schedule = Database['public']['Tables']['schedules']['Row'];
 type Booking = Database['public']['Tables']['bookings']['Row'];
@@ -29,7 +32,7 @@ export const getRoute = async (id: string) => {
   return data as Route;
 };
 
-export const createRoute = async (routeData: Partial<Route>) => {
+export const createRoute = async (routeData: RouteInsert) => {
   const { data, error } = await supabase
     .from('routes')
     .insert(routeData)
@@ -39,7 +42,7 @@ export const createRoute = async (routeData: Partial<Route>) => {
   return data;
 };
 
-export const updateRoute = async (id: string, routeData: Partial<Route>) => {
+export const updateRoute = async (id: string, routeData: RouteUpdate) => {
   const { data, error } = await supabase
     .from('routes')
     .update(routeData)
