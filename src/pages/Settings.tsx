@@ -2,18 +2,21 @@
 import { useState } from "react";
 import { 
   Bell, 
-  CalendarDays, 
+  ChevronRight, 
+  Compass, 
   CreditCard, 
-  Download, 
+  Globe, 
+  HelpCircle, 
+  Info, 
+  Languages, 
+  LifeBuoy, 
   Lock, 
   Mail, 
   MessageSquare, 
-  Plus, 
-  PlusCircle, 
+  Moon, 
   Settings as SettingsIcon, 
   Shield, 
-  Terminal, 
-  UserRound, 
+  Sun, 
   User 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,62 +26,56 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import ProfileForm from "@/components/ProfileForm";
 import SecurityForm from "@/components/SecurityForm";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("profile");
-
+  const [tab, setTab] = useState("profile");
+  
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground mt-1">Configure your account settings</p>
       </div>
-
-      <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile" className="text-base">
-            <User className="mr-2 h-4 w-4" />
+      
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+        <TabsList className="bg-zippy-darkGray border-zippy-gray">
+          <TabsTrigger value="profile" className="data-[state=active]:bg-zippy-purple">
+            <User className="h-4 w-4 mr-2" />
             Profile
           </TabsTrigger>
-          <TabsTrigger value="security" className="text-base">
-            <Shield className="mr-2 h-4 w-4" />
+          <TabsTrigger value="security" className="data-[state=active]:bg-zippy-purple">
+            <Lock className="h-4 w-4 mr-2" />
             Security
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="text-base">
-            <Bell className="mr-2 h-4 w-4" />
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-zippy-purple">
+            <Bell className="h-4 w-4 mr-2" />
             Notifications
           </TabsTrigger>
+          <TabsTrigger value="appearance" className="data-[state=active]:bg-zippy-purple">
+            <Moon className="h-4 w-4 mr-2" />
+            Appearance
+          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="profile" className="space-y-4">
-          <Card className="bg-zippy-darkGray border-zippy-gray text-card-foreground">
+        
+        <TabsContent value="profile">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
             <CardHeader>
               <CardTitle>Profile</CardTitle>
               <CardDescription>
-                Update your personal information and how others see you on the platform.
+                Update your personal information and profile photo.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -86,13 +83,13 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="security" className="space-y-4">
-          <Card className="bg-zippy-darkGray border-zippy-gray text-card-foreground">
+        
+        <TabsContent value="security">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
             <CardHeader>
               <CardTitle>Security</CardTitle>
               <CardDescription>
-                Manage your password and account security settings.
+                Manage your account security and two-factor authentication.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -100,103 +97,287 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-4">
-          <Card className="bg-zippy-darkGray border-zippy-gray text-card-foreground">
+        
+        <TabsContent value="notifications">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
             <CardHeader>
               <CardTitle>Notifications</CardTitle>
               <CardDescription>
-                Configure how you receive notifications and updates.
+                Configure how you receive notifications.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Email Notifications</h3>
+                <Separator className="bg-zippy-gray" />
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
-                      <Label htmlFor="booking-notifications">Booking Updates</Label>
+                      <div className="flex items-center">
+                        <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <h4 className="font-medium">System Updates</h4>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        Receive notifications about your booking status changes.
+                        Receive updates about system maintenance and new features.
                       </p>
                     </div>
-                    <Switch id="booking-notifications" defaultChecked />
+                    <Switch defaultChecked />
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
-                      <Label htmlFor="schedule-notifications">Schedule Changes</Label>
+                      <div className="flex items-center">
+                        <MessageSquare className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <h4 className="font-medium">Booking Updates</h4>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        Get notified when there are changes to your scheduled trips.
+                        Get notified about new bookings and status changes.
                       </p>
                     </div>
-                    <Switch id="schedule-notifications" defaultChecked />
+                    <Switch defaultChecked />
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
-                      <Label htmlFor="marketing-emails">Marketing Emails</Label>
+                      <div className="flex items-center">
+                        <Compass className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <h4 className="font-medium">Route Changes</h4>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        Receive emails about new features, promotions, and deals.
+                        Be informed about route modifications and schedule updates.
                       </p>
                     </div>
-                    <Switch id="marketing-emails" />
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <h4 className="font-medium">Payment Notifications</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Receive notifications about payments and billing.
+                      </p>
+                    </div>
+                    <Switch />
                   </div>
                 </div>
               </div>
               
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Push Notifications</h3>
+                <Separator className="bg-zippy-gray" />
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
-                      <Label htmlFor="push-bookings">Booking Updates</Label>
+                      <h4 className="font-medium">Booking Notifications</h4>
                       <p className="text-sm text-muted-foreground">
-                        Receive push notifications about your booking status changes.
+                        Show notifications for new bookings and status changes.
                       </p>
                     </div>
-                    <Switch id="push-bookings" defaultChecked />
+                    <Switch defaultChecked />
                   </div>
-                  
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
-                      <Label htmlFor="push-reminders">Trip Reminders</Label>
+                      <h4 className="font-medium">Marketing Notifications</h4>
                       <p className="text-sm text-muted-foreground">
-                        Get push notifications before your scheduled trips.
+                        Receive special offers and promotional notifications.
                       </p>
                     </div>
-                    <Switch id="push-reminders" defaultChecked />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Notification Preferences</h3>
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="notification-time">Reminder Time</Label>
-                    <Select defaultValue="24hours">
-                      <SelectTrigger className="bg-zippy-gray border-zippy-lightGray">
-                        <SelectValue placeholder="Select when to receive reminders" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                        <SelectItem value="1hour">1 hour before</SelectItem>
-                        <SelectItem value="3hours">3 hours before</SelectItem>
-                        <SelectItem value="12hours">12 hours before</SelectItem>
-                        <SelectItem value="24hours">24 hours before</SelectItem>
-                        <SelectItem value="48hours">48 hours before</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Switch />
                   </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">Save Changes</Button>
-            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="appearance">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
+            <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+              <CardDescription>
+                Customize the appearance of the application.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Theme</h3>
+                <Separator className="bg-zippy-gray" />
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                  <Card className="bg-zippy-gray border-zippy-lightGray relative cursor-pointer overflow-hidden p-2">
+                    <div className="absolute -right-1 -top-1 h-8 w-8 rotate-45 bg-zippy-purple" />
+                    <CardHeader className="p-4">
+                      <div className="flex justify-between items-center">
+                        <Sun className="h-5 w-5" />
+                        <div className="h-4 w-4" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <h4 className="font-medium">Light</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Light theme for daytime use
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-zippy-gray border-zippy-lightGray relative cursor-pointer overflow-hidden p-2 ring-2 ring-zippy-purple">
+                    <CardHeader className="p-4">
+                      <div className="flex justify-between items-center">
+                        <Moon className="h-5 w-5" />
+                        <div className="h-4 w-4 rounded-full bg-zippy-purple" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <h4 className="font-medium">Dark</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Dark theme for nighttime use
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-zippy-gray border-zippy-lightGray relative cursor-pointer overflow-hidden p-2">
+                    <CardHeader className="p-4">
+                      <div className="flex justify-between items-center">
+                        <Settings className="h-5 w-5" />
+                        <div className="h-4 w-4" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <h4 className="font-medium">System</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Follow system settings
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Language</h3>
+                <Separator className="bg-zippy-gray" />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Globe className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h4 className="font-medium">Language</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Select your preferred language
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
+                      <Languages className="h-4 w-4 mr-2" />
+                      English
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <Card className="bg-zippy-darkGray border-zippy-gray">
+        <CardHeader>
+          <CardTitle>Help & Support</CardTitle>
+          <CardDescription>
+            Get help with using the application.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <HelpCircle className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h4 className="font-medium">Documentation</h4>
+                <p className="text-sm text-muted-foreground">
+                  Read the documentation to learn how to use the application.
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
+              View Docs
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+          
+          <Separator className="bg-zippy-gray" />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <LifeBuoy className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h4 className="font-medium">Support</h4>
+                <p className="text-sm text-muted-foreground">
+                  Contact support if you're having issues with the application.
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
+              Contact
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+          
+          <Separator className="bg-zippy-gray" />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h4 className="font-medium">Feedback</h4>
+                <p className="text-sm text-muted-foreground">
+                  Send feedback to help improve the application.
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
+              Send Feedback
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+          
+          <Separator className="bg-zippy-gray" />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Shield className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h4 className="font-medium">Privacy Policy</h4>
+                <p className="text-sm text-muted-foreground">
+                  Read our privacy policy.
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
+              View
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+          
+          <Separator className="bg-zippy-gray" />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Info className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h4 className="font-medium">About</h4>
+                <p className="text-sm text-muted-foreground">
+                  View information about the application.
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
+              View
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

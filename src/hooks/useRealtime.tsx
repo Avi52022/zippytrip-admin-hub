@@ -51,7 +51,7 @@ export function useRealtime<T>(
             event: 'INSERT', 
             schema: 'public', 
             table 
-          }, 
+          } as any, 
           async (payload) => {
             if (fetchFunction) {
               try {
@@ -75,7 +75,7 @@ export function useRealtime<T>(
             event: 'UPDATE', 
             schema: 'public', 
             table 
-          }, 
+          } as any, 
           async (payload) => {
             if (fetchFunction) {
               try {
@@ -99,7 +99,7 @@ export function useRealtime<T>(
             event: 'DELETE', 
             schema: 'public', 
             table 
-          }, 
+          } as any, 
           async (payload) => {
             if (fetchFunction) {
               try {
@@ -122,7 +122,7 @@ export function useRealtime<T>(
             event: event, 
             schema: 'public', 
             table 
-          }, 
+          } as any, 
           async (payload) => {
             if (fetchFunction) {
               try {

@@ -20,7 +20,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { getUserProfile, UserProfile } from "@/services/profile";
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as { user: any; logout: () => void };
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
@@ -107,7 +107,7 @@ const Header = () => {
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar>
                 {profile?.avatar_url ? (
-                  <AvatarImage src={profile.avatar_url} alt="Profile" />
+                  <AvatarImage src={profile.avatar_url} alt="Profile" className="object-cover" />
                 ) : (
                   <AvatarFallback className="bg-zippy-purple text-white">{userInitials}</AvatarFallback>
                 )}

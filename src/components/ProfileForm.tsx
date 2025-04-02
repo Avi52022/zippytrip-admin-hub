@@ -35,7 +35,7 @@ const ProfileForm = ({ initialData = {
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(initialData.avatarUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: any };
 
   // Fetch user profile on component mount
   useEffect(() => {
@@ -123,9 +123,7 @@ const ProfileForm = ({ initialData = {
       });
       
       // Refresh the page to update the avatar in the header
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Error",
@@ -143,7 +141,7 @@ const ProfileForm = ({ initialData = {
       <div className="flex items-center space-x-4">
         <Avatar className="h-20 w-20 border-2 border-zippy-gray">
           {avatarPreview ? (
-            <AvatarImage src={avatarPreview} alt="Profile" />
+            <AvatarImage src={avatarPreview} alt="Profile" className="object-cover" />
           ) : (
             <AvatarFallback className="bg-zippy-purple text-white text-xl">
               {formData.firstName && formData.lastName 

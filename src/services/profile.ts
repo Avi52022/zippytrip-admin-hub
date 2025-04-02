@@ -21,6 +21,33 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   
   if (error) {
     console.error('Error fetching user profile:', error);
+    
+    // If the profile doesn't exist, create a new one
+    if (error.code === 'PGRST116') {
+      try {
+        const newProfile = await createUserProfile(userId);
+        return newProfile;
+      } catch (createError) {
+        console.error('Error creating new profile:', createError);
+        return null;
+      }
+    }
+    
+    return null;
+  }
+  
+  return data;
+};
+
+export const createUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .insert({ id: userId })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error creating user profile:', error);
     return null;
   }
   
