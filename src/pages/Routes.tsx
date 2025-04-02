@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
   Bus, 
@@ -42,13 +41,16 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { fetchRoutes, deleteRoute } from "@/services/api";
 import { useRealtime } from "@/hooks/useRealtime";
+import { Database } from "@/integrations/supabase/types";
+
+type RouteType = Database['public']['Tables']['routes']['Row'];
 
 const Routes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   
   // Use the real-time hook to get route data
-  const { data: routesData, loading } = useRealtime('routes', [], ['*'], fetchRoutes);
+  const { data: routesData, loading } = useRealtime<RouteType>('routes', [], ['*'], fetchRoutes);
 
   // Filter routes based on search term
   const filteredRoutes = routesData.filter(route => 
@@ -63,7 +65,7 @@ const Routes = () => {
   const maintenanceRoutes = 0; // This would come from your maintenance data
   const inactiveRoutes = routesData.filter(route => !route.is_active).length;
 
-  const handleDeleteRoute = async (id) => {
+  const handleDeleteRoute = async (id: string) => {
     try {
       await deleteRoute(id);
       toast({
@@ -181,7 +183,7 @@ const Routes = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Source - Destination</TableHead>
                   <TableHead>Duration</TableHead>
-                  <TableHead>Fare</TableHead>
+                  <TableHead>Distance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -206,7 +208,7 @@ const Routes = () => {
                         </div>
                       </TableCell>
                       <TableCell>{route.duration ? `${Math.floor(route.duration / 60)}h ${route.duration % 60}m` : 'N/A'}</TableCell>
-                      <TableCell>{route.fare ? `$${route.fare}` : 'N/A'}</TableCell>
+                      <TableCell>{route.distance ? `${route.distance} km` : 'N/A'}</TableCell>
                       <TableCell>
                         <Badge 
                           variant={route.is_active ? "outline" : "destructive"}

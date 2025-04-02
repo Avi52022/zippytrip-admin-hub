@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { enableRealtimeUpdates } from "@/services/api";
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthContextType = {
   isAuthenticated: boolean;

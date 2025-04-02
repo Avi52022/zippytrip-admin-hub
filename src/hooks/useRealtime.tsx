@@ -44,85 +44,101 @@ export function useRealtime<T>(
     // Add listeners for all specified events
     events.forEach(event => {
       if (event === '*') {
-        channel.on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table 
-        }, async (payload) => {
-          if (fetchFunction) {
-            // Re-fetch all data to ensure consistency
-            try {
-              const freshData = await fetchFunction();
-              setData(freshData);
-              toast({
-                title: `New ${table.slice(0, -1)} added`,
-                description: "The data has been updated."
-              });
-            } catch (err) {
-              console.error(`Error re-fetching ${table} data:`, err);
+        channel.on(
+          'postgres_changes', 
+          { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table 
+          }, 
+          async (payload) => {
+            if (fetchFunction) {
+              // Re-fetch all data to ensure consistency
+              try {
+                const freshData = await fetchFunction();
+                setData(freshData);
+                toast({
+                  title: `New ${table.slice(0, -1)} added`,
+                  description: "The data has been updated."
+                });
+              } catch (err) {
+                console.error(`Error re-fetching ${table} data:`, err);
+              }
             }
           }
-        });
+        );
 
-        channel.on('postgres_changes', { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table 
-        }, async (payload) => {
-          if (fetchFunction) {
-            // Re-fetch all data to ensure consistency
-            try {
-              const freshData = await fetchFunction();
-              setData(freshData);
-              toast({
-                title: `${table.slice(0, -1)} updated`,
-                description: "The data has been updated."
-              });
-            } catch (err) {
-              console.error(`Error re-fetching ${table} data:`, err);
+        channel.on(
+          'postgres_changes', 
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table 
+          }, 
+          async (payload) => {
+            if (fetchFunction) {
+              // Re-fetch all data to ensure consistency
+              try {
+                const freshData = await fetchFunction();
+                setData(freshData);
+                toast({
+                  title: `${table.slice(0, -1)} updated`,
+                  description: "The data has been updated."
+                });
+              } catch (err) {
+                console.error(`Error re-fetching ${table} data:`, err);
+              }
             }
           }
-        });
+        );
 
-        channel.on('postgres_changes', { 
-          event: 'DELETE', 
-          schema: 'public', 
-          table 
-        }, async (payload) => {
-          if (fetchFunction) {
-            // Re-fetch all data to ensure consistency
-            try {
-              const freshData = await fetchFunction();
-              setData(freshData);
-              toast({
-                title: `${table.slice(0, -1)} deleted`,
-                description: "The data has been updated."
-              });
-            } catch (err) {
-              console.error(`Error re-fetching ${table} data:`, err);
+        channel.on(
+          'postgres_changes', 
+          { 
+            event: 'DELETE', 
+            schema: 'public', 
+            table 
+          }, 
+          async (payload) => {
+            if (fetchFunction) {
+              // Re-fetch all data to ensure consistency
+              try {
+                const freshData = await fetchFunction();
+                setData(freshData);
+                toast({
+                  title: `${table.slice(0, -1)} deleted`,
+                  description: "The data has been updated."
+                });
+              } catch (err) {
+                console.error(`Error re-fetching ${table} data:`, err);
+              }
             }
           }
-        });
+        );
       } else {
-        channel.on('postgres_changes', { 
-          event, 
-          schema: 'public', 
-          table 
-        }, async (payload) => {
-          if (fetchFunction) {
-            // Re-fetch all data to ensure consistency
-            try {
-              const freshData = await fetchFunction();
-              setData(freshData);
-              toast({
-                title: `${table.slice(0, -1)} ${event.toLowerCase()}ed`,
-                description: "The data has been updated."
-              });
-            } catch (err) {
-              console.error(`Error re-fetching ${table} data:`, err);
+        channel.on(
+          'postgres_changes', 
+          { 
+            event, 
+            schema: 'public', 
+            table 
+          }, 
+          async (payload) => {
+            if (fetchFunction) {
+              // Re-fetch all data to ensure consistency
+              try {
+                const freshData = await fetchFunction();
+                setData(freshData);
+                toast({
+                  title: `${table.slice(0, -1)} ${event.toLowerCase()}ed`,
+                  description: "The data has been updated."
+                });
+              } catch (err) {
+                console.error(`Error re-fetching ${table} data:`, err);
+              }
             }
           }
-        });
+        );
       }
     });
     

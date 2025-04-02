@@ -16,21 +16,39 @@ import {
 } from "recharts";
 import { fetchRoutes, fetchBuses, fetchSchedules, fetchBookings } from "@/services/api";
 import { useRealtime } from "@/hooks/useRealtime";
+import { Database } from "@/integrations/supabase/types";
+
+// Define proper types for chart data
+interface RevenueDataPoint {
+  name: string;
+  revenue: number;
+}
+
+interface PassengersDataPoint {
+  name: string;
+  passengers: number;
+}
+
+interface RoutePerformance {
+  name: string;
+  revenue: number;
+  passengers: number;
+}
 
 const Dashboard = () => {
   // Use real-time hooks for all our data
-  const { data: routes } = useRealtime('routes', [], ['*'], fetchRoutes);
-  const { data: buses } = useRealtime('buses', [], ['*'], fetchBuses);
+  const { data: routes } = useRealtime<Database['public']['Tables']['routes']['Row']>('routes', [], ['*'], fetchRoutes);
+  const { data: buses } = useRealtime<Database['public']['Tables']['buses']['Row']>('buses', [], ['*'], fetchBuses);
   const { data: schedules } = useRealtime('schedules', [], ['*'], () => fetchSchedules());
   const { data: bookings } = useRealtime('bookings', [], ['*'], fetchBookings);
 
   // Calculate revenue data based on bookings
-  const [revenueData, setRevenueData] = useState([]);
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
   
   useEffect(() => {
     if (bookings && bookings.length > 0) {
       // Group bookings by month and sum the total_fare
-      const revenueByMonth = bookings.reduce((acc, booking) => {
+      const revenueByMonth = bookings.reduce<Record<string, number>>((acc, booking) => {
         const date = new Date(booking.booking_date);
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const month = monthNames[date.getMonth()];
@@ -73,12 +91,12 @@ const Dashboard = () => {
   }, [bookings]);
 
   // Calculate passengers data based on bookings
-  const [passengersData, setPassengersData] = useState([]);
+  const [passengersData, setPassengersData] = useState<PassengersDataPoint[]>([]);
   
   useEffect(() => {
     if (bookings && bookings.length > 0) {
       // Group bookings by day of week and count passengers
-      const passengersByDay = bookings.reduce((acc, booking) => {
+      const passengersByDay = bookings.reduce<Record<string, number>>((acc, booking) => {
         const date = new Date(booking.booking_date);
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const day = dayNames[date.getDay()];
@@ -115,12 +133,12 @@ const Dashboard = () => {
   }, [bookings]);
 
   // Calculate route performance data
-  const [routePerformance, setRoutePerformance] = useState([]);
+  const [routePerformance, setRoutePerformance] = useState<RoutePerformance[]>([]);
   
   useEffect(() => {
     if (routes && schedules && bookings && schedules.length > 0 && bookings.length > 0) {
       // Group bookings by route and calculate revenue and passengers
-      const performanceByRoute = {};
+      const performanceByRoute: Record<string, RoutePerformance> = {};
       
       bookings.forEach(booking => {
         const schedule = booking.schedules;
@@ -179,34 +197,40 @@ const Dashboard = () => {
     const activities = [];
     
     // Add recent bookings
-    bookings?.slice(0, 2).forEach(booking => {
-      activities.push({
-        type: 'booking',
-        title: 'User booking completed',
-        time: Math.floor((new Date() - new Date(booking.created_at)) / (60 * 1000)),
-        icon: <Users className="h-4 w-4 text-zippy-purple" />
+    if (bookings) {
+      bookings.slice(0, 2).forEach(booking => {
+        activities.push({
+          type: 'booking',
+          title: 'User booking completed',
+          time: Math.floor((new Date().getTime() - new Date(booking.created_at).getTime()) / (60 * 1000)),
+          icon: <Users className="h-4 w-4 text-zippy-purple" />
+        });
       });
-    });
+    }
     
     // Add bus updates
-    buses?.slice(0, 2).forEach((bus, index) => {
-      activities.push({
-        type: 'bus',
-        title: `Bus ${bus.registration_number} scheduled maintenance`,
-        time: Math.floor(Math.random() * 60),
-        icon: <Bus className="h-4 w-4 text-zippy-purple" />
+    if (buses) {
+      buses.slice(0, 2).forEach(bus => {
+        activities.push({
+          type: 'bus',
+          title: `Bus ${bus.registration_number} scheduled maintenance`,
+          time: Math.floor(Math.random() * 60),
+          icon: <Bus className="h-4 w-4 text-zippy-purple" />
+        });
       });
-    });
+    }
     
     // Add route updates
-    routes?.slice(0, 1).forEach(route => {
-      activities.push({
-        type: 'route',
-        title: `New route added: ${route.origin}-${route.destination}`,
-        time: Math.floor(Math.random() * 60),
-        icon: <Route className="h-4 w-4 text-zippy-purple" />
+    if (routes) {
+      routes.slice(0, 1).forEach(route => {
+        activities.push({
+          type: 'route',
+          title: `New route added: ${route.origin}-${route.destination}`,
+          time: Math.floor(Math.random() * 60),
+          icon: <Route className="h-4 w-4 text-zippy-purple" />
+        });
       });
-    });
+    }
     
     // Sort by time
     return activities
