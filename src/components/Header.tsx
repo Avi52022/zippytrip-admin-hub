@@ -20,7 +20,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { getUserProfile, UserProfile } from "@/services/profile";
 
 const Header = () => {
-  const { user, logout } = useAuth() as { user: any; logout: () => void };
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();

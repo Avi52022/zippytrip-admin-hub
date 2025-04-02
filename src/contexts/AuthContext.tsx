@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AuthContextType = {
   isAuthenticated: boolean;
+  user: { id: string; email?: string } | null;  // Add user property to the type
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null); // Add user state
   const [realtimeChannel, setRealtimeChannel] = useState<ReturnType<typeof enableRealtimeUpdates> | null>(null);
 
   // Check if user is authenticated on component mount
@@ -20,6 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const authStatus = localStorage.getItem("isAuthenticated");
     if (authStatus === "true") {
       setIsAuthenticated(true);
+      
+      // Set mock user data since we're using a simplified auth system
+      setUser({ id: "admin-user", email: "admin@zippytrip.com" });
       
       // Enable real-time updates when authenticated
       const channel = enableRealtimeUpdates();
@@ -40,6 +45,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("isAuthenticated", "true");
       setIsAuthenticated(true);
       
+      // Set mock user data
+      setUser({ id: "admin-user", email: "admin@zippytrip.com" });
+      
       // Enable real-time updates on login
       const channel = enableRealtimeUpdates();
       setRealtimeChannel(channel);
@@ -53,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem("isAuthenticated");
     setIsAuthenticated(false);
+    setUser(null);
     
     // Clean up real-time subscription on logout
     if (realtimeChannel) {
@@ -62,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

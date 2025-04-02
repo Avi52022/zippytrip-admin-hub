@@ -35,7 +35,7 @@ const ProfileForm = ({ initialData = {
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(initialData.avatarUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth() as { user: any };
+  const { user } = useAuth();
 
   // Fetch user profile on component mount
   useEffect(() => {
