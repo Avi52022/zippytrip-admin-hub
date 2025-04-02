@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import { Bell, Search, User, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +17,27 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/contexts/ThemeContext";
+import { getUserProfile, UserProfile } from "@/services/profile";
 
 const Header = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user?.id) {
+        const userProfile = await getUserProfile(user.id);
+        if (userProfile) {
+          setProfile(userProfile);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -31,6 +47,10 @@ const Header = () => {
     });
     navigate("/login");
   };
+
+  const userInitials = profile ? 
+    `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() : 
+    user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
     <header className="border-b border-zippy-gray p-4 flex items-center justify-between bg-zippy-darkGray">
@@ -86,15 +106,21 @@ const Header = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar>
-                <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback className="bg-zippy-purple text-white">OP</AvatarFallback>
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt="Profile" />
+                ) : (
+                  <AvatarFallback className="bg-zippy-purple text-white">{userInitials}</AvatarFallback>
+                )}
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-zippy-darkGray border-zippy-gray">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={() => navigate("/settings")}
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>

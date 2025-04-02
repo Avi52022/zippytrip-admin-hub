@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload, Trash, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { getUserProfile, updateUserProfile, uploadProfileImage, UserProfile } from "@/services/profile";
 
 interface ProfileFormProps {
   initialData?: {
@@ -33,6 +35,34 @@ const ProfileForm = ({ initialData = {
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(initialData.avatarUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user?.id) {
+        try {
+          const profile = await getUserProfile(user.id);
+          if (profile) {
+            setFormData({
+              firstName: profile.first_name || '',
+              lastName: profile.last_name || '',
+              email: user.email || '',
+              phone: profile.phone || '',
+              jobTitle: '',
+              bio: '',
+              avatarUrl: profile.avatar_url
+            });
+            setAvatarPreview(profile.avatar_url);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -57,23 +87,52 @@ const ProfileForm = ({ initialData = {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your profile.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
-      // Here we'd typically upload the avatar and submit the form data to an API
-      // For this example, we'll simulate the API call with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Upload avatar if selected
+      let avatarUrl = avatarPreview;
+      if (avatar) {
+        const uploadedUrl = await uploadProfileImage(user.id, avatar);
+        if (uploadedUrl) {
+          avatarUrl = uploadedUrl;
+        }
+      }
+      
+      // Update profile data
+      await updateUserProfile(user.id, {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        avatar_url: avatarUrl
+      });
 
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully.",
       });
+      
+      // Refresh the page to update the avatar in the header
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       toast({
         title: "Error",
         description: "There was an error updating your profile.",
         variant: "destructive"
       });
+      console.error('Error updating profile:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -161,6 +220,7 @@ const ProfileForm = ({ initialData = {
           onChange={handleInputChange}
           placeholder="john.doe@example.com" 
           className="bg-zippy-darkGray border-zippy-gray" 
+          disabled
         />
       </div>
       

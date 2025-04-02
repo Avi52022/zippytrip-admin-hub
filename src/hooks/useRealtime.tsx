@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type SupabaseTable = 'routes' | 'buses' | 'schedules' | 'bookings';
+type SupabaseTable = 'routes' | 'buses' | 'schedules' | 'bookings' | 'user_profiles';
 type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
 export function useRealtime<T>(
@@ -48,7 +48,7 @@ export function useRealtime<T>(
         channel.on(
           'postgres_changes', 
           { 
-            event: 'INSERT' as 'INSERT', 
+            event: 'INSERT', 
             schema: 'public', 
             table 
           }, 
@@ -72,7 +72,7 @@ export function useRealtime<T>(
         channel.on(
           'postgres_changes', 
           { 
-            event: 'UPDATE' as 'UPDATE', 
+            event: 'UPDATE', 
             schema: 'public', 
             table 
           }, 
@@ -96,7 +96,7 @@ export function useRealtime<T>(
         channel.on(
           'postgres_changes', 
           { 
-            event: 'DELETE' as 'DELETE', 
+            event: 'DELETE', 
             schema: 'public', 
             table 
           }, 
@@ -119,7 +119,7 @@ export function useRealtime<T>(
         channel.on(
           'postgres_changes', 
           { 
-            event: event as any, 
+            event: event, 
             schema: 'public', 
             table 
           }, 
