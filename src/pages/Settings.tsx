@@ -1,7 +1,6 @@
-
+import { useState } from "react";
 import { 
   Bell, 
-  Check, 
   ChevronDown, 
   Edit, 
   Key, 
@@ -26,7 +25,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   Tabs,
@@ -42,12 +40,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileForm from "@/components/ProfileForm";
+import SecurityForm from "@/components/SecurityForm";
 
 const Settings = () => {
+  const [activeTab, setActiveTab] = useState("profile");
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -55,15 +55,14 @@ const Settings = () => {
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground mt-1">Manage your account settings and preferences</p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
-          </Button>
-        </div>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs 
+        defaultValue="profile" 
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="bg-zippy-gray">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
@@ -82,63 +81,15 @@ const Settings = () => {
                   Update your personal information and profile picture
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-20 w-20 border-2 border-zippy-gray">
-                    <AvatarImage src="/placeholder.svg" />
-                    <AvatarFallback className="bg-zippy-purple text-white text-xl">OP</AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-2">
-                    <div className="flex space-x-2">
-                      <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </Button>
-                      <Button variant="outline" className="text-destructive bg-zippy-gray border-zippy-lightGray hover:bg-destructive hover:text-destructive-foreground">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Remove
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      JPG, PNG or GIF. Max size 2MB.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name">First name</Label>
-                    <Input id="first-name" placeholder="John" className="bg-zippy-darkGray border-zippy-gray" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last-name">Last name</Label>
-                    <Input id="last-name" placeholder="Doe" className="bg-zippy-darkGray border-zippy-gray" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input id="email" type="email" placeholder="john.doe@example.com" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone number</Label>
-                  <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="job-title">Job title</Label>
-                  <Input id="job-title" placeholder="Fleet Manager" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea 
-                    id="bio" 
-                    placeholder="I manage the fleet operations and route scheduling for ZippyTrip" 
-                    className="min-h-32 bg-zippy-darkGray border-zippy-gray"
-                  />
-                </div>
+              <CardContent>
+                <ProfileForm initialData={{
+                  firstName: 'John',
+                  lastName: 'Doe',
+                  email: 'john.doe@zippytrip.com',
+                  phone: '+1 (555) 000-0000',
+                  jobTitle: 'Fleet Manager',
+                  bio: 'I manage the fleet operations and route scheduling for ZippyTrip',
+                }} />
               </CardContent>
             </Card>
             
@@ -179,7 +130,11 @@ const Settings = () => {
                 <div className="space-y-2">
                   <div className="text-sm font-medium">Actions</div>
                   <div className="flex flex-col space-y-2">
-                    <Button variant="outline" className="justify-start bg-zippy-gray border-zippy-lightGray">
+                    <Button 
+                      variant="outline" 
+                      className="justify-start bg-zippy-gray border-zippy-lightGray"
+                      onClick={() => setActiveTab("security")}
+                    >
                       <Lock className="mr-2 h-4 w-4" />
                       Change Password
                     </Button>
@@ -210,7 +165,12 @@ const Settings = () => {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
-                  <Input id="username" placeholder="johndoe" className="bg-zippy-darkGray border-zippy-gray" />
+                  <div className="flex gap-2">
+                    <input id="username" defaultValue="johndoe" className="flex h-10 w-full rounded-md border border-zippy-gray bg-zippy-darkGray px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                    <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">
+                      Save
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
@@ -349,28 +309,8 @@ const Settings = () => {
                   Update your password to ensure account security
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Current password</Label>
-                  <Input type="password" id="current-password" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New password</Label>
-                  <Input type="password" id="new-password" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm password</Label>
-                  <Input type="password" id="confirm-password" className="bg-zippy-darkGray border-zippy-gray" />
-                </div>
-                
-                <div>
-                  <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">
-                    <Key className="mr-2 h-4 w-4" />
-                    Update Password
-                  </Button>
-                </div>
+              <CardContent>
+                <SecurityForm />
               </CardContent>
             </Card>
             
@@ -465,7 +405,404 @@ const Settings = () => {
           </div>
         </TabsContent>
         
-        {/* Additional tabs content omitted for brevity */}
+        <TabsContent value="appearance">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
+            <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+              <CardDescription>
+                Customize the look and feel of the application
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <div className="font-medium mb-2">Theme</div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="relative cursor-pointer">
+                      <div className="aspect-video rounded-md bg-zinc-950 border border-zippy-gray overflow-hidden">
+                        <div className="h-full flex">
+                          <div className="w-1/4 bg-zinc-800"></div>
+                          <div className="flex-1 bg-zinc-950 p-2">
+                            <div className="h-2 w-16 bg-zinc-800 rounded-full mb-2"></div>
+                            <div className="h-2 w-12 bg-zinc-800 rounded-full"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center mt-1">
+                        <div className="flex items-center space-x-1">
+                          <div className="h-4 w-4 rounded-full border-2 border-zippy-purple bg-zippy-dark"></div>
+                          <span className="text-sm">Dark</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="relative cursor-pointer">
+                      <div className="aspect-video rounded-md bg-white border border-gray-200 overflow-hidden">
+                        <div className="h-full flex">
+                          <div className="w-1/4 bg-gray-100"></div>
+                          <div className="flex-1 bg-white p-2">
+                            <div className="h-2 w-16 bg-gray-200 rounded-full mb-2"></div>
+                            <div className="h-2 w-12 bg-gray-200 rounded-full"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center mt-1">
+                        <div className="flex items-center space-x-1">
+                          <div className="h-4 w-4 rounded-full border-2 border-gray-300"></div>
+                          <span className="text-sm">Light</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="relative cursor-pointer">
+                      <div className="aspect-video rounded-md overflow-hidden border border-zippy-gray">
+                        <div className="h-full flex">
+                          <div className="w-1/4 bg-zinc-800"></div>
+                          <div className="flex-1 bg-zinc-950 p-2">
+                            <div className="h-full flex flex-col justify-between">
+                              <div>
+                                <div className="h-2 w-16 bg-zinc-800 rounded-full mb-2"></div>
+                                <div className="h-2 w-12 bg-zinc-800 rounded-full"></div>
+                              </div>
+                              <div className="h-8 bg-gradient-to-r from-zippy-purple to-purple-600 rounded-md"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center mt-1">
+                        <div className="flex items-center space-x-1">
+                          <div className="h-4 w-4 rounded-full border-2 border-gray-300"></div>
+                          <span className="text-sm">Zippy</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="font-medium">Color Scheme</div>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <div className="flex flex-col items-center space-y-1.5">
+                      <div className="h-8 w-8 rounded-full bg-purple-600"></div>
+                      <span className="text-xs">Purple</span>
+                    </div>
+                    <div className="flex flex-col items-center space-y-1.5">
+                      <div className="h-8 w-8 rounded-full bg-blue-600"></div>
+                      <span className="text-xs">Blue</span>
+                    </div>
+                    <div className="flex flex-col items-center space-y-1.5">
+                      <div className="h-8 w-8 rounded-full bg-green-600"></div>
+                      <span className="text-xs">Green</span>
+                    </div>
+                    <div className="flex flex-col items-center space-y-1.5">
+                      <div className="h-8 w-8 rounded-full bg-orange-600"></div>
+                      <span className="text-xs">Orange</span>
+                    </div>
+                    <div className="flex flex-col items-center space-y-1.5">
+                      <div className="h-8 w-8 rounded-full bg-red-600"></div>
+                      <span className="text-xs">Red</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="bg-zippy-gray" />
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">Compact Mode</div>
+                      <div className="text-sm text-muted-foreground">Reduce spacing and size of UI elements</div>
+                    </div>
+                    <Switch id="compact-mode" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">Reduce Motion</div>
+                      <div className="text-sm text-muted-foreground">Decrease the amount of animations</div>
+                    </div>
+                    <Switch id="reduce-motion" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">Show Quick Actions</div>
+                      <div className="text-sm text-muted-foreground">Display quick action buttons in cards and tables</div>
+                    </div>
+                    <Switch id="quick-actions" defaultChecked />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
+            <CardHeader>
+              <CardTitle>Notification Settings</CardTitle>
+              <CardDescription>
+                Manage how you receive notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-medium text-lg mb-4">General Notifications</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Email Notifications</div>
+                        <div className="text-sm text-muted-foreground">Receive email notifications for important updates</div>
+                      </div>
+                      <Switch id="email-notifications-general" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Push Notifications</div>
+                        <div className="text-sm text-muted-foreground">Receive push notifications in your browser</div>
+                      </div>
+                      <Switch id="push-notifications" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">SMS Notifications</div>
+                        <div className="text-sm text-muted-foreground">Receive text messages for critical alerts</div>
+                      </div>
+                      <Switch id="sms-notifications" />
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="bg-zippy-gray" />
+                
+                <div>
+                  <h3 className="font-medium text-lg mb-4">System Notifications</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">New Bookings</div>
+                        <div className="text-sm text-muted-foreground">When a new booking is made</div>
+                      </div>
+                      <Switch id="new-bookings" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Booking Cancellations</div>
+                        <div className="text-sm text-muted-foreground">When a booking is cancelled</div>
+                      </div>
+                      <Switch id="booking-cancellations" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Schedule Changes</div>
+                        <div className="text-sm text-muted-foreground">When a schedule is modified</div>
+                      </div>
+                      <Switch id="schedule-changes" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">System Updates</div>
+                        <div className="text-sm text-muted-foreground">Important system updates and maintenance notices</div>
+                      </div>
+                      <Switch id="system-updates" defaultChecked />
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="bg-zippy-gray" />
+                
+                <div>
+                  <h3 className="font-medium text-lg mb-4">Marketing Notifications</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Product Updates</div>
+                        <div className="text-sm text-muted-foreground">New features and improvements</div>
+                      </div>
+                      <Switch id="product-updates" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Tips & Tutorials</div>
+                        <div className="text-sm text-muted-foreground">Tips on using the platform effectively</div>
+                      </div>
+                      <Switch id="tips-tutorials" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Promotions & Offers</div>
+                        <div className="text-sm text-muted-foreground">Special promotions and limited-time offers</div>
+                      </div>
+                      <Switch id="promotions-offers" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="company">
+          <Card className="bg-zippy-darkGray border-zippy-gray">
+            <CardHeader>
+              <CardTitle>Company Information</CardTitle>
+              <CardDescription>
+                Manage your company details and branding
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="company-name">Company Name</Label>
+                  <Input 
+                    id="company-name" 
+                    defaultValue="ZippyTrip Inc." 
+                    className="bg-zippy-darkGray border-zippy-gray" 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="company-website">Website</Label>
+                  <Input 
+                    id="company-website" 
+                    defaultValue="https://zippytrip.example.com" 
+                    className="bg-zippy-darkGray border-zippy-gray" 
+                  />
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-email">Contact Email</Label>
+                    <Input 
+                      id="company-email" 
+                      type="email" 
+                      defaultValue="contact@zippytrip.example.com" 
+                      className="bg-zippy-darkGray border-zippy-gray" 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="company-phone">Contact Phone</Label>
+                    <Input 
+                      id="company-phone" 
+                      type="tel" 
+                      defaultValue="+1 (555) 000-0000" 
+                      className="bg-zippy-darkGray border-zippy-gray" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="company-address">Business Address</Label>
+                  <Textarea 
+                    id="company-address" 
+                    defaultValue="123 Transport Ave, Suite 456, New York, NY 10001, USA" 
+                    className="min-h-20 bg-zippy-darkGray border-zippy-gray"
+                  />
+                </div>
+                
+                <Separator className="bg-zippy-gray" />
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium mb-2">Company Logo</h3>
+                    <div className="flex items-center space-x-4">
+                      <div className="h-20 w-20 bg-zippy-purple rounded-md flex items-center justify-center">
+                        <span className="text-white text-lg font-bold">ZT</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" className="bg-zippy-gray border-zippy-lightGray relative">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload New Logo
+                            <input type="file" className="absolute inset-0 opacity-0" />
+                          </Button>
+                          <Button variant="outline" className="text-destructive bg-zippy-gray border-zippy-lightGray hover:bg-destructive hover:text-destructive-foreground">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Remove
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Recommended size: 512x512px. PNG or SVG format.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium mb-2">Brand Colors</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="primary-color">Primary Color</Label>
+                        <div className="flex">
+                          <div className="h-10 w-10 bg-zippy-purple rounded-l-md"></div>
+                          <Input 
+                            id="primary-color" 
+                            defaultValue="#8B5CF6" 
+                            className="rounded-l-none bg-zippy-darkGray border-zippy-gray" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="secondary-color">Secondary Color</Label>
+                        <div className="flex">
+                          <div className="h-10 w-10 bg-blue-500 rounded-l-md"></div>
+                          <Input 
+                            id="secondary-color" 
+                            defaultValue="#3B82F6" 
+                            className="rounded-l-none bg-zippy-darkGray border-zippy-gray" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="accent-color">Accent Color</Label>
+                        <div className="flex">
+                          <div className="h-10 w-10 bg-green-500 rounded-l-md"></div>
+                          <Input 
+                            id="accent-color" 
+                            defaultValue="#22C55E" 
+                            className="rounded-l-none bg-zippy-darkGray border-zippy-gray" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="text-color">Text Color</Label>
+                        <div className="flex">
+                          <div className="h-10 w-10 bg-white rounded-l-md"></div>
+                          <Input 
+                            id="text-color" 
+                            defaultValue="#FFFFFF" 
+                            className="rounded-l-none bg-zippy-darkGray border-zippy-gray" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Company Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

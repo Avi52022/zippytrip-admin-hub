@@ -44,16 +44,16 @@ export function useRealtime<T>(
     // Add listeners for all specified events
     events.forEach(event => {
       if (event === '*') {
+        // For INSERT events
         channel.on(
           'postgres_changes', 
           { 
-            event: 'INSERT', 
+            event: 'INSERT' as 'INSERT', 
             schema: 'public', 
             table 
           }, 
           async (payload) => {
             if (fetchFunction) {
-              // Re-fetch all data to ensure consistency
               try {
                 const freshData = await fetchFunction();
                 setData(freshData);
@@ -68,16 +68,16 @@ export function useRealtime<T>(
           }
         );
 
+        // For UPDATE events
         channel.on(
           'postgres_changes', 
           { 
-            event: 'UPDATE', 
+            event: 'UPDATE' as 'UPDATE', 
             schema: 'public', 
             table 
           }, 
           async (payload) => {
             if (fetchFunction) {
-              // Re-fetch all data to ensure consistency
               try {
                 const freshData = await fetchFunction();
                 setData(freshData);
@@ -92,16 +92,16 @@ export function useRealtime<T>(
           }
         );
 
+        // For DELETE events
         channel.on(
           'postgres_changes', 
           { 
-            event: 'DELETE', 
+            event: 'DELETE' as 'DELETE', 
             schema: 'public', 
             table 
           }, 
           async (payload) => {
             if (fetchFunction) {
-              // Re-fetch all data to ensure consistency
               try {
                 const freshData = await fetchFunction();
                 setData(freshData);
@@ -119,18 +119,17 @@ export function useRealtime<T>(
         channel.on(
           'postgres_changes', 
           { 
-            event, 
+            event: event as any, 
             schema: 'public', 
             table 
           }, 
           async (payload) => {
             if (fetchFunction) {
-              // Re-fetch all data to ensure consistency
               try {
                 const freshData = await fetchFunction();
                 setData(freshData);
                 toast({
-                  title: `${table.slice(0, -1)} ${event.toLowerCase()}ed`,
+                  title: `${table.slice(0, -1)} ${event.toLowerCase()}${event === 'DELETE' ? 'd' : 'ed'}`,
                   description: "The data has been updated."
                 });
               } catch (err) {

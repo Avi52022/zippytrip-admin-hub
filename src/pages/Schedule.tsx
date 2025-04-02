@@ -57,11 +57,13 @@ import { format } from "date-fns";
 import { fetchSchedules } from "@/services/api";
 import { useRealtime } from "@/hooks/useRealtime";
 import { supabase } from "@/integrations/supabase/client";
+import AddScheduleModal from "@/components/AddScheduleModal";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
   const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
   const fetchSchedulesForDate = async () => {
@@ -145,6 +147,14 @@ const Schedule = () => {
     return "text-blue-500";
   };
 
+  const handleAddSchedule = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleScheduleAdded = () => {
+    // The schedule data will be refreshed automatically by the useRealtime hook
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -157,7 +167,10 @@ const Schedule = () => {
             <Filter className="mr-2 h-4 w-4" />
             Filter
           </Button>
-          <Button className="bg-zippy-purple hover:bg-zippy-darkPurple">
+          <Button 
+            className="bg-zippy-purple hover:bg-zippy-darkPurple"
+            onClick={handleAddSchedule}
+          >
             <CalendarCheck className="mr-2 h-4 w-4" />
             Add Schedule
           </Button>
@@ -437,6 +450,12 @@ const Schedule = () => {
           </div>
         </CardContent>
       </Card>
+
+      <AddScheduleModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={handleScheduleAdded}
+      />
     </div>
   );
 };
