@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -55,102 +54,59 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
-
-const scheduleData = [
-  {
-    id: "S001",
-    route: "Delhi to Mumbai Express",
-    routeId: "R001",
-    departureTime: "10:30 PM",
-    arrivalTime: "03:00 PM (+1)",
-    date: "2023-11-25",
-    bus: "Bus #001 - Luxury (48 seats)",
-    driver: "John Smith",
-    status: "scheduled",
-    bookedSeats: 36,
-    totalSeats: 48,
-  },
-  {
-    id: "S002",
-    route: "Bangalore to Chennai",
-    routeId: "R002",
-    departureTime: "08:00 AM",
-    arrivalTime: "02:15 PM",
-    date: "2023-11-25",
-    bus: "Bus #003 - Standard (56 seats)",
-    driver: "Rajesh Kumar",
-    status: "in-transit",
-    bookedSeats: 42,
-    totalSeats: 56,
-  },
-  {
-    id: "S003",
-    route: "Kolkata to Hyderabad",
-    routeId: "R004",
-    departureTime: "09:00 PM",
-    arrivalTime: "09:45 PM (+1)",
-    date: "2023-11-25",
-    bus: "Bus #002 - Sleeper (36 berths)",
-    driver: "Amit Patel",
-    status: "completed",
-    bookedSeats: 34,
-    totalSeats: 36,
-  },
-  {
-    id: "S004",
-    route: "Delhi to Mumbai Express",
-    routeId: "R001",
-    departureTime: "10:30 PM",
-    arrivalTime: "03:00 PM (+1)",
-    date: "2023-11-26",
-    bus: "Bus #001 - Luxury (48 seats)",
-    driver: "Sarah Johnson",
-    status: "scheduled",
-    bookedSeats: 28,
-    totalSeats: 48,
-  },
-  {
-    id: "S005",
-    route: "Pune to Goa Coastal",
-    routeId: "R003",
-    departureTime: "11:00 PM",
-    arrivalTime: "09:00 AM (+1)",
-    date: "2023-11-26",
-    bus: "Bus #004 - Deluxe (40 seats)",
-    driver: "Michael Brown",
-    status: "scheduled",
-    bookedSeats: 38,
-    totalSeats: 40,
-  },
-  {
-    id: "S006",
-    route: "Jaipur to Delhi",
-    routeId: "R005",
-    departureTime: "06:00 AM",
-    arrivalTime: "11:30 AM",
-    date: "2023-11-26",
-    bus: "Bus #005 - AC Sleeper (32 berths)",
-    driver: "Priya Sharma",
-    status: "cancelled",
-    bookedSeats: 0,
-    totalSeats: 32,
-  },
-];
+import { fetchSchedules } from "@/services/api";
+import { useRealtime } from "@/hooks/useRealtime";
+import { supabase } from "@/integrations/supabase/client";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  
+  const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
+  const fetchSchedulesForDate = async () => {
+    return await fetchSchedules(formattedDate);
+  };
+  
+  const { data: scheduleData, loading } = useRealtime('schedules', [], ['*'], fetchSchedulesForDate);
 
-  const filteredSchedules = scheduleData.filter((schedule) => {
+  const schedules = scheduleData.map(schedule => {
+    const departureTime = new Date(schedule.departure_time);
+    const arrivalTime = new Date(schedule.arrival_time);
+    
+    let status = "scheduled";
+    if (departureTime <= new Date() && arrivalTime >= new Date()) {
+      status = "in-transit";
+    } else if (arrivalTime < new Date()) {
+      status = "completed";
+    }
+    
+    const route = schedule.routes;
+    const bus = schedule.buses;
+    
+    return {
+      id: schedule.id,
+      route: route ? route.name : "Unknown Route",
+      routeId: route ? route.id : "Unknown",
+      departureTime: format(departureTime, "hh:mm a"),
+      arrivalTime: format(arrivalTime, "hh:mm a"),
+      date: format(departureTime, "yyyy-MM-dd"),
+      bus: bus ? `Bus #${bus.registration_number} - ${bus.model} (${bus.capacity} seats)` : "Unknown Bus",
+      driver: "Assigned Driver",
+      status,
+      bookedSeats: bus ? (bus.capacity - schedule.available_seats) : 0,
+      totalSeats: bus ? bus.capacity : 0,
+    };
+  });
+
+  const filteredSchedules = schedules.filter((schedule) => {
     const matchesDate = date 
       ? schedule.date === format(date, "yyyy-MM-dd") 
       : true;
     
     const matchesSearch = schedule.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
       schedule.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      schedule.bus.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      schedule.driver.toLowerCase().includes(searchQuery.toLowerCase());
+      schedule.bus.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" 
       ? true 
@@ -158,6 +114,11 @@ const Schedule = () => {
     
     return matchesDate && matchesSearch && matchesStatus;
   });
+
+  const todaySchedules = schedules.filter(s => s.date === format(new Date(), "yyyy-MM-dd")).length;
+  const scheduledCount = schedules.filter(s => s.status === "scheduled").length;
+  const inTransitCount = schedules.filter(s => s.status === "in-transit").length;
+  const completedCount = schedules.filter(s => s.status === "completed").length;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -214,7 +175,7 @@ const Schedule = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{todaySchedules}</div>
           </CardContent>
         </Card>
         
@@ -228,7 +189,7 @@ const Schedule = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{scheduledCount}</div>
           </CardContent>
         </Card>
         
@@ -242,7 +203,7 @@ const Schedule = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{inTransitCount}</div>
           </CardContent>
         </Card>
         
@@ -256,7 +217,7 @@ const Schedule = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">{completedCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -374,7 +335,13 @@ const Schedule = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSchedules.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      Loading schedules...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredSchedules.length > 0 ? (
                   filteredSchedules.map((schedule) => (
                     <TableRow key={schedule.id} className="border-b border-zippy-gray">
                       <TableCell className="font-medium">{schedule.id}</TableCell>
@@ -446,7 +413,9 @@ const Schedule = () => {
                             )}
                             <DropdownMenuSeparator />
                             {schedule.status === "scheduled" && (
-                              <DropdownMenuItem className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                              <DropdownMenuItem 
+                                className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Cancel Trip</span>
                               </DropdownMenuItem>

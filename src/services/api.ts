@@ -191,3 +191,26 @@ export const processBooking = async (bookingData: {
     throw error;
   }
 };
+
+// Enable real-time updates for tables
+export const enableRealtimeUpdates = () => {
+  return supabase
+    .channel('schema-db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'routes' }, payload => {
+      console.log('Routes change received!', payload);
+      return payload;
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'buses' }, payload => {
+      console.log('Buses change received!', payload);
+      return payload;
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, payload => {
+      console.log('Schedules change received!', payload);
+      return payload;
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, payload => {
+      console.log('Bookings change received!', payload);
+      return payload;
+    })
+    .subscribe();
+};
