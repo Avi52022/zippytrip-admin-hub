@@ -15,12 +15,9 @@ import {
   Moon, 
   Settings as SettingsIcon, 
   Shield, 
-  Sun, 
-  User 
+  Sun
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -36,11 +33,10 @@ import {
 } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import ProfileForm from "@/components/ProfileForm";
 import SecurityForm from "@/components/SecurityForm";
 
 const Settings = () => {
-  const [tab, setTab] = useState("profile");
+  const [tab, setTab] = useState("security");
   
   return (
     <div className="space-y-6 animate-fade-in">
@@ -51,10 +47,6 @@ const Settings = () => {
       
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList className="bg-zippy-darkGray border-zippy-gray">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-zippy-purple">
-            <User className="h-4 w-4 mr-2" />
-            Profile
-          </TabsTrigger>
           <TabsTrigger value="security" className="data-[state=active]:bg-zippy-purple">
             <Lock className="h-4 w-4 mr-2" />
             Security
@@ -68,20 +60,6 @@ const Settings = () => {
             Appearance
           </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="profile">
-          <Card className="bg-zippy-darkGray border-zippy-gray">
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>
-                Update your personal information and profile photo.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProfileForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
         
         <TabsContent value="security">
           <Card className="bg-zippy-darkGray border-zippy-gray">

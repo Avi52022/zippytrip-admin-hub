@@ -122,7 +122,7 @@ const Header = () => {
               onClick={() => navigate("/settings")}
             >
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
