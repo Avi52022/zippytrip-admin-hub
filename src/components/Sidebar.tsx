@@ -89,7 +89,7 @@ const Sidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <div className="mt-auto p-4 flex flex-col space-y-4">
-        <SidebarTrigger className="remove this " />
+        
       </div>
     </SidebarWrapper>;
 };
