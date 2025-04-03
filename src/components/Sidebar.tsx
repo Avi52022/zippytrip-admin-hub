@@ -33,6 +33,64 @@ const Sidebar = () => {
     icon: <Settings size={20} />,
     path: "/settings"
   }];
-  return;
+  return <SidebarWrapper>
+      <SidebarHeader className="p-4 flex flex-col items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Bus className="h-8 w-8 text-zippy-purple" />
+          <span className="text-2xl font-bold text-gradient">ZippyTrip</span>
+        </div>
+        <div className="text-sm text-muted-foreground mt-1">Bus Operator Admin</div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map(item => <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.path} className={({
+                  isActive
+                }) => isActive ? "text-zippy-purple bg-zippy-darkGray" : "text-gray-400 hover:text-gray-100"}>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Quick Access</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/routes/add" className={({
+                  isActive
+                }) => isActive ? "text-zippy-purple bg-zippy-darkGray" : "text-gray-400 hover:text-gray-100"}>
+                    <MapPin size={20} />
+                    <span>Add New Route</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/users" className={({
+                  isActive
+                }) => isActive ? "text-zippy-purple bg-zippy-darkGray" : "text-gray-400 hover:text-gray-100"}>
+                    <Users size={20} />
+                    <span>Manage Users</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <div className="mt-auto p-4 flex flex-col space-y-4">
+        <SidebarTrigger className="remove this " />
+      </div>
+    </SidebarWrapper>;
 };
 export default Sidebar;
