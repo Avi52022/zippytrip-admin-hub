@@ -256,7 +256,7 @@ const Dashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">NPR {totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               +20.1% from last month
             </p>
@@ -327,7 +327,7 @@ const Dashboard = () => {
                 <YAxis stroke="#666" />
                 <Tooltip 
                   contentStyle={{ backgroundColor: "#1E1E1E", borderColor: "#333" }} 
-                  formatter={(value) => [`$${value}`, "Revenue"]}
+                  formatter={(value) => [`NPR ${value}`, "Revenue"]}
                 />
                 <Legend />
                 <Line
@@ -391,7 +391,7 @@ const Dashboard = () => {
                       <div className="text-sm text-muted-foreground">{route.passengers} passengers</div>
                     </div>
                   </div>
-                  <div className="font-medium">${route.revenue}</div>
+                  <div className="font-medium">NPR {route.revenue}</div>
                 </div>
               ))}
             </div>

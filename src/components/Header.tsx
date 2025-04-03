@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";

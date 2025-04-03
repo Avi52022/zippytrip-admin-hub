@@ -248,7 +248,7 @@ const EditRoute = () => {
                   name="fare"
                   value={formData.fare}
                   onChange={handleInputChange}
-                  placeholder="$25.99"
+                  placeholder="NPR 2500"
                   className="bg-zippy-gray border-zippy-lightGray"
                 />
               </div>
