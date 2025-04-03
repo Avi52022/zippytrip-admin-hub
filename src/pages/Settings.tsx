@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Bell, 
@@ -109,7 +108,7 @@ const Settings = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Email Notifications</h3>
-                <Separator className="bg-zippy-gray" />
+                <Separator />
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
@@ -167,7 +166,7 @@ const Settings = () => {
               
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Push Notifications</h3>
-                <Separator className="bg-zippy-gray" />
+                <Separator />
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <div className="space-y-0.5">
@@ -204,7 +203,7 @@ const Settings = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Theme</h3>
-                <Separator className="bg-zippy-gray" />
+                <Separator />
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                   <Card className="bg-zippy-gray border-zippy-lightGray relative cursor-pointer overflow-hidden p-2">
                     <div className="absolute -right-1 -top-1 h-8 w-8 rotate-45 bg-zippy-purple" />
@@ -256,7 +255,7 @@ const Settings = () => {
               
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Language</h3>
-                <Separator className="bg-zippy-gray" />
+                <Separator />
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -305,7 +304,7 @@ const Settings = () => {
             </Button>
           </div>
           
-          <Separator className="bg-zippy-gray" />
+          <Separator />
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -323,7 +322,7 @@ const Settings = () => {
             </Button>
           </div>
           
-          <Separator className="bg-zippy-gray" />
+          <Separator />
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -341,7 +340,7 @@ const Settings = () => {
             </Button>
           </div>
           
-          <Separator className="bg-zippy-gray" />
+          <Separator />
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -359,7 +358,7 @@ const Settings = () => {
             </Button>
           </div>
           
-          <Separator className="bg-zippy-gray" />
+          <Separator />
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">

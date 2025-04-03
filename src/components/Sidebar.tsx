@@ -1,6 +1,15 @@
 
-import { NavLink } from "react-router-dom";
-import { BarChart, Bus, Calendar, MapPin, Route, Settings, Users } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { 
+  BarChart, 
+  Bus, 
+  Calendar, 
+  MapPin, 
+  Route, 
+  Settings, 
+  Users,
+  ArrowLeft 
+} from "lucide-react";
 import { 
   Sidebar as SidebarWrapper, 
   SidebarContent, 
@@ -13,8 +22,11 @@ import {
   SidebarTrigger,
   SidebarHeader
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+  
   const menuItems = [
     { id: 1, label: "Dashboard", icon: <BarChart size={20} />, path: "/" },
     { id: 2, label: "Routes", icon: <Route size={20} />, path: "/routes" },
@@ -23,6 +35,10 @@ const Sidebar = () => {
     { id: 5, label: "Analytics", icon: <BarChart size={20} />, path: "/analytics" },
     { id: 6, label: "Settings", icon: <Settings size={20} />, path: "/settings" },
   ];
+
+  const handleBackToMain = () => {
+    navigate("/");
+  };
 
   return (
     <SidebarWrapper>
@@ -97,7 +113,16 @@ const Sidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <div className="mt-auto p-4">
+      <div className="mt-auto p-4 flex flex-col space-y-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center justify-center gap-2 bg-zippy-darkGray hover:bg-zippy-gray"
+          onClick={handleBackToMain}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Main</span>
+        </Button>
         <SidebarTrigger />
       </div>
     </SidebarWrapper>

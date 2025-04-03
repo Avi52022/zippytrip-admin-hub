@@ -1,33 +1,42 @@
 
-import { useEffect, useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-type SupabaseTable = 'routes' | 'buses' | 'schedules' | 'bookings' | 'user_profiles';
-type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+type FetchFunction<T> = () => Promise<T[]>;
 
 export function useRealtime<T>(
-  table: SupabaseTable, 
-  initialData: T[] = [], 
-  events: RealtimeEvent[] = ['*'],
-  fetchFunction?: () => Promise<T[]>
+  table: string,
+  initialData: T[] = [],
+  columns: string[] = ['*'],
+  fetchFunction?: FetchFunction<T>
 ) {
   const [data, setData] = useState<T[]>(initialData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
-  // Initial data fetch
+  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
-      if (!fetchFunction) return;
+      setLoading(true);
       try {
-        setLoading(true);
-        const fetchedData = await fetchFunction();
+        let fetchedData: T[];
+        
+        if (fetchFunction) {
+          fetchedData = await fetchFunction();
+        } else {
+          const { data: supabaseData, error: supabaseError } = await supabase
+            .from(table)
+            .select(columns.join(','));
+          
+          if (supabaseError) throw supabaseError;
+          fetchedData = supabaseData as T[];
+        }
+        
         setData(fetchedData);
-        setError(null);
       } catch (err) {
-        console.error(`Error fetching ${table} data:`, err);
+        console.error(`Error fetching data from ${table}:`, err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);
@@ -35,124 +44,89 @@ export function useRealtime<T>(
     };
 
     fetchData();
-  }, [table, fetchFunction]);
+  }, [table, columns, fetchFunction]);
 
-  // Set up realtime subscription
+  // Set up real-time subscription
   useEffect(() => {
-    const channel = supabase.channel(`public:${table}`);
+    // Create a new real-time channel
+    const setupRealtimeSubscription = () => {
+      if (!table) return null;
+      
+      // Fix the issue with the channel setup
+      const newChannel = supabase
+        .channel(`public:${table}`)
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public',
+          table: table 
+        }, payload => {
+          console.log(`Real-time update received for ${table}:`, payload);
+          
+          const handleChange = async () => {
+            try {
+              // Fetch the latest data
+              if (fetchFunction) {
+                const freshData = await fetchFunction();
+                setData(freshData);
+              } else {
+                const { data: supabaseData, error: supabaseError } = await supabase
+                  .from(table)
+                  .select(columns.join(','));
+                
+                if (supabaseError) throw supabaseError;
+                setData(supabaseData as T[]);
+              }
+            } catch (err) {
+              console.error(`Error updating data after real-time event on ${table}:`, err);
+            }
+          };
+          
+          handleChange();
+        })
+        .subscribe(status => {
+          console.log(`Real-time subscription to ${table} status:`, status);
+        });
+      
+      return newChannel;
+    };
     
-    // Add listeners for all specified events
-    events.forEach(event => {
-      if (event === '*') {
-        // For INSERT events
-        channel.on(
-          'postgres_changes', 
-          { 
-            event: 'INSERT', 
-            schema: 'public', 
-            table 
-          }, 
-          async (payload) => {
-            if (fetchFunction) {
-              try {
-                const freshData = await fetchFunction();
-                setData(freshData);
-                toast({
-                  title: `New ${table.slice(0, -1)} added`,
-                  description: "The data has been updated."
-                });
-              } catch (err) {
-                console.error(`Error re-fetching ${table} data:`, err);
-              }
-            }
-          }
-        );
-
-        // For UPDATE events
-        channel.on(
-          'postgres_changes', 
-          { 
-            event: 'UPDATE', 
-            schema: 'public', 
-            table 
-          }, 
-          async (payload) => {
-            if (fetchFunction) {
-              try {
-                const freshData = await fetchFunction();
-                setData(freshData);
-                toast({
-                  title: `${table.slice(0, -1)} updated`,
-                  description: "The data has been updated."
-                });
-              } catch (err) {
-                console.error(`Error re-fetching ${table} data:`, err);
-              }
-            }
-          }
-        );
-
-        // For DELETE events
-        channel.on(
-          'postgres_changes', 
-          { 
-            event: 'DELETE', 
-            schema: 'public', 
-            table 
-          }, 
-          async (payload) => {
-            if (fetchFunction) {
-              try {
-                const freshData = await fetchFunction();
-                setData(freshData);
-                toast({
-                  title: `${table.slice(0, -1)} deleted`,
-                  description: "The data has been updated."
-                });
-              } catch (err) {
-                console.error(`Error re-fetching ${table} data:`, err);
-              }
-            }
-          }
-        );
-      } else {
-        channel.on(
-          'postgres_changes', 
-          { 
-            event, 
-            schema: 'public', 
-            table 
-          }, 
-          async (payload) => {
-            if (fetchFunction) {
-              try {
-                const freshData = await fetchFunction();
-                setData(freshData);
-                toast({
-                  title: `${table.slice(0, -1)} ${event.toLowerCase()}${event === 'DELETE' ? 'd' : 'ed'}`,
-                  description: "The data has been updated."
-                });
-              } catch (err) {
-                console.error(`Error re-fetching ${table} data:`, err);
-              }
-            }
-          }
-        );
-      }
-    });
-    
-    // Subscribe to the channel
-    channel.subscribe((status) => {
-      if (status !== 'SUBSCRIBED') {
-        console.log(`Realtime subscription to ${table} status:`, status);
-      }
-    });
+    const newChannel = setupRealtimeSubscription();
+    setChannel(newChannel);
     
     // Cleanup subscription on unmount
     return () => {
-      supabase.removeChannel(channel);
+      if (newChannel) {
+        console.log(`Removing real-time subscription to ${table}`);
+        supabase.removeChannel(newChannel);
+      }
     };
-  }, [table, events, fetchFunction, toast]);
-  
-  return { data, loading, error, setData };
+  }, [table, columns, fetchFunction]);
+
+  // Expose reload function for manual refresh
+  const reload = async () => {
+    setLoading(true);
+    try {
+      let freshData: T[];
+      
+      if (fetchFunction) {
+        freshData = await fetchFunction();
+      } else {
+        const { data: supabaseData, error: supabaseError } = await supabase
+          .from(table)
+          .select(columns.join(','));
+        
+        if (supabaseError) throw supabaseError;
+        freshData = supabaseData as T[];
+      }
+      
+      setData(freshData);
+    } catch (err) {
+      console.error(`Error reloading data from ${table}:`, err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { data, loading, error, reload };
 }
