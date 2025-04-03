@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Bell, Search, User, LogOut, Moon, Sun } from "lucide-react";
+import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +15,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getUserProfile, UserProfile } from "@/services/profile";
 
@@ -23,7 +22,7 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -65,15 +64,6 @@ const Header = () => {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Moon className="h-4 w-4" />
-          <Switch 
-            checked={theme === "light"}
-            onCheckedChange={toggleTheme}
-          />
-          <Sun className="h-4 w-4" />
-        </div>
-        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="relative bg-zippy-gray border-none">
