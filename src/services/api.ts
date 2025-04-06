@@ -76,40 +76,50 @@ export const fetchBuses = async () => {
 
 // Schedules API
 export const fetchSchedules = async (date?: string) => {
-  let query = supabase
-    .from('schedules')
-    .select(`
-      *,
-      routes (
-        id,
-        name,
-        origin,
-        destination
-      ),
-      buses (
-        id,
-        registration_number,
-        model,
-        capacity
-      )
-    `);
-  
-  if (date) {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
+  try {
+    let query = supabase
+      .from('schedules')
+      .select(`
+        *,
+        routes (
+          id,
+          name,
+          origin,
+          destination
+        ),
+        buses (
+          id,
+          registration_number,
+          model,
+          capacity
+        )
+      `);
     
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      query = query
+        .gte('departure_time', startOfDay.toISOString())
+        .lte('departure_time', endOfDay.toISOString());
+    }
     
-    query = query
-      .gte('departure_time', startOfDay.toISOString())
-      .lte('departure_time', endOfDay.toISOString());
+    const { data, error } = await query.order('departure_time');
+    
+    if (error) {
+      console.error("Error fetching schedules:", error);
+      throw error;
+    }
+    
+    console.log("Fetched schedules:", data);
+    return data;
+  } catch (err) {
+    console.error("Error in fetchSchedules:", err);
+    throw err;
   }
-  
-  const { data, error } = await query.order('departure_time');
-  
-  if (error) throw error;
-  return data;
 };
 
 // Bookings API

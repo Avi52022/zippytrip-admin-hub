@@ -51,9 +51,21 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
   const { data: routes } = useRealtime<any>('routes', [], ['*'], fetchRoutes);
   const { data: buses } = useRealtime<any>('buses', [], ['*'], fetchBuses);
 
+  useEffect(() => {
+    console.log("Routes in modal:", routes);
+    console.log("Buses in modal:", buses);
+  }, [routes, buses]);
+
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      console.log("Submitting schedule with data:", { 
+        route_id: selectedRoute,
+        bus_id: selectedBus,
+        departureTime,
+        arrivalTime,
+        fare
+      });
 
       const departureDateTime = new Date(date);
       const [depHours, depMinutes] = departureTime.split(':').map(Number);
@@ -84,7 +96,12 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
         })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
+
+      console.log("Schedule created successfully:", data);
 
       toast({
         title: "Schedule created",
@@ -123,11 +140,15 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
                   <SelectValue placeholder="Select a route" />
                 </SelectTrigger>
                 <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                  {routes.map((route) => (
-                    <SelectItem key={route.id} value={route.id}>
-                      {route.name} ({route.origin} to {route.destination})
-                    </SelectItem>
-                  ))}
+                  {routes && routes.length > 0 ? (
+                    routes.map((route) => (
+                      <SelectItem key={route.id} value={route.id}>
+                        {route.name} ({route.origin} to {route.destination})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="loading" disabled>Loading routes...</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -139,11 +160,15 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
                   <SelectValue placeholder="Select a bus" />
                 </SelectTrigger>
                 <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                  {buses.map((bus) => (
-                    <SelectItem key={bus.id} value={bus.id}>
-                      Bus #{bus.registration_number} - {bus.model} ({bus.capacity} seats)
-                    </SelectItem>
-                  ))}
+                  {buses && buses.length > 0 ? (
+                    buses.map((bus) => (
+                      <SelectItem key={bus.id} value={bus.id}>
+                        Bus #{bus.registration_number} - {bus.model} ({bus.capacity} seats)
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="loading" disabled>Loading buses...</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -215,6 +240,7 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
                 value={fare}
                 onChange={(e) => setFare(e.target.value)}
                 className="bg-zippy-darkGray border-zippy-gray"
+                placeholder="Enter fare amount in NPR"
               />
             </div>
           </div>

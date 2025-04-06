@@ -5,7 +5,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
 // Define valid table names type based on Supabase database schema
-type TableName = keyof Database['public']['Tables'];
+export type TableName = keyof Database['public']['Tables'];
 
 type FetchFunction<T> = () => Promise<T[]>;
 
@@ -48,7 +48,7 @@ export function useRealtime<T>(
     };
 
     fetchData();
-  }, [table, columns, fetchFunction]);
+  }, [table, columns.join(','), fetchFunction]);
 
   // Set up real-time subscription
   useEffect(() => {
@@ -104,7 +104,7 @@ export function useRealtime<T>(
         supabase.removeChannel(newChannel);
       }
     };
-  }, [table, columns, fetchFunction]);
+  }, [table, columns.join(','), fetchFunction]);
 
   // Expose reload function for manual refresh
   const reload = async () => {
