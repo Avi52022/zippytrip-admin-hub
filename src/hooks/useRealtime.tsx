@@ -2,11 +2,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { Database } from '@/integrations/supabase/types';
+
+// Define valid table names type based on Supabase database schema
+type TableName = keyof Database['public']['Tables'];
 
 type FetchFunction<T> = () => Promise<T[]>;
 
 export function useRealtime<T>(
-  table: string,
+  table: TableName,
   initialData: T[] = [],
   columns: string[] = ['*'],
   fetchFunction?: FetchFunction<T>
