@@ -52,6 +52,19 @@ export function useRealtime<T>(
 
   // Set up real-time subscription
   useEffect(() => {
+    // Enable Realtime for the table if not already enabled
+    const enableRealtimeForTable = async () => {
+      try {
+        console.log(`Enabling realtime for table: ${table}`);
+        await supabase.rpc('enable_realtime_for_table', { table_name: table });
+      } catch (error) {
+        console.warn(`Error enabling realtime for ${table}:`, error);
+        // Continue anyway as the table might already be enabled
+      }
+    };
+
+    enableRealtimeForTable();
+    
     // Create a new real-time channel
     const setupRealtimeSubscription = () => {
       if (!table) return null;

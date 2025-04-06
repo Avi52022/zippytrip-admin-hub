@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -44,13 +43,24 @@ export const getRoute = async (id: string) => {
 };
 
 export const createRoute = async (routeData: RouteInsert) => {
-  const { data, error } = await supabase
-    .from('routes')
-    .insert(routeData)
-    .select();
-  
-  if (error) throw error;
-  return data;
+  console.log("Creating route with data:", routeData);
+  try {
+    const { data, error } = await supabase
+      .from('routes')
+      .insert(routeData)
+      .select();
+    
+    if (error) {
+      console.error("Error creating route:", error);
+      throw error;
+    }
+    
+    console.log("Route created successfully:", data);
+    return data;
+  } catch (err) {
+    console.error("Error in createRoute:", err);
+    throw err;
+  }
 };
 
 export const updateRoute = async (id: string, routeData: RouteUpdate) => {
@@ -244,6 +254,38 @@ export const processBooking = async (bookingData: {
   } catch (error) {
     console.error('Error processing booking:', error);
     throw error;
+  }
+};
+
+// Function to enable realtime for a table
+export const enableRealtimeForTable = async (tableName: string) => {
+  try {
+    // First, make the table replica identity full to get complete data in changes
+    const { error: replicaError } = await supabase.rpc(
+      'set_replica_identity_full', 
+      { table_name: tableName }
+    );
+    
+    if (replicaError) {
+      console.warn(`Error setting replica identity for ${tableName}:`, replicaError);
+    }
+    
+    // Then add the table to the realtime publication
+    const { error } = await supabase.rpc(
+      'add_table_to_publication', 
+      { table_name: tableName }
+    );
+    
+    if (error) {
+      console.warn(`Error adding ${tableName} to realtime publication:`, error);
+      return false;
+    }
+    
+    console.log(`Realtime enabled for table: ${tableName}`);
+    return true;
+  } catch (err) {
+    console.error(`Error enabling realtime for ${tableName}:`, err);
+    return false;
   }
 };
 
