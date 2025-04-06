@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -577,6 +576,7 @@ const AddRoute = () => {
                         <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
                       <SelectContent className="bg-zippy-darkGray border-zippy-gray">
+                        <SelectItem value="npr">NPR (रू)</SelectItem>
                         <SelectItem value="usd">USD ($)</SelectItem>
                         <SelectItem value="eur">EUR (€)</SelectItem>
                         <SelectItem value="gbp">GBP (£)</SelectItem>

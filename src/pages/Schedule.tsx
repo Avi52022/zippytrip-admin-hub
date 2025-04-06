@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon,
@@ -98,6 +99,7 @@ const Schedule = () => {
       status,
       bookedSeats: bus ? (bus.capacity - schedule.available_seats) : 0,
       totalSeats: bus ? bus.capacity : 0,
+      fare: schedule.fare
     };
   });
 
@@ -343,6 +345,7 @@ const Schedule = () => {
                     </div>
                   </TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Fare</TableHead>
                   <TableHead>Occupancy</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -350,7 +353,7 @@ const Schedule = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       Loading schedules...
                     </TableCell>
                   </TableRow>
@@ -379,6 +382,7 @@ const Schedule = () => {
                       <TableCell>{schedule.bus}</TableCell>
                       <TableCell>{schedule.driver}</TableCell>
                       <TableCell>{getStatusBadge(schedule.status)}</TableCell>
+                      <TableCell>NPR {schedule.fare.toFixed(2)}</TableCell>
                       <TableCell>
                         {schedule.status !== "cancelled" ? (
                           <div className="flex items-center gap-2">
@@ -440,7 +444,7 @@ const Schedule = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       No schedules found for the selected criteria.
                     </TableCell>
                   </TableRow>

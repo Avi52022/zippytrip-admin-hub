@@ -48,8 +48,8 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const { data: routes } = useRealtime('routes', [], ['*'], fetchRoutes);
-  const { data: buses } = useRealtime('buses', [], ['*'], fetchBuses);
+  const { data: routes } = useRealtime<any>('routes', [], ['*'], fetchRoutes);
+  const { data: buses } = useRealtime<any>('buses', [], ['*'], fetchBuses);
 
   const handleSubmit = async () => {
     try {
@@ -206,7 +206,7 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fare">Fare (USD)</Label>
+              <Label htmlFor="fare">Fare (NPR)</Label>
               <Input
                 id="fare"
                 type="number"
