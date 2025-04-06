@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -91,7 +90,7 @@ const routeData = {
       dayOffset: 0,
     },
   ],
-  fare: "$25.99",
+  fare: "NPR 2500",
   status: "active",
   busType: "Luxury",
   amenities: ["Wi-Fi", "AC", "USB Charging", "Snacks", "Water Bottle", "TV"],
@@ -106,9 +105,9 @@ const routeData = {
   ],
   performance: {
     avgOccupancy: "87%",
-    avgRevenue: "$1,245 per trip",
+    avgRevenue: "NPR 1,245 per trip",
     monthlyPassengers: "1,560",
-    monthlyRevenue: "$40,500",
+    monthlyRevenue: "NPR 40,500",
     popularStop: "Ahmedabad Junction",
   },
 };
@@ -409,12 +408,10 @@ const RouteDetail = () => {
                 <div className="space-y-6">
                   {routeData.stops.map((stop, index) => (
                     <div key={index} className="relative pl-8 pb-6">
-                      {/* Vertical line connecting stops */}
                       {index < routeData.stops.length - 1 && (
                         <div className="absolute left-3.5 top-3 bottom-0 w-0.5 bg-zippy-gray" />
                       )}
                       
-                      {/* Stop indicator */}
                       <div className={`absolute left-0 top-0 h-7 w-7 rounded-full flex items-center justify-center ${
                         index === 0 
                           ? "bg-green-500/20 text-green-500" 
