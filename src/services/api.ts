@@ -12,13 +12,24 @@ type Booking = Database['public']['Tables']['bookings']['Row'];
 
 // Routes API
 export const fetchRoutes = async () => {
-  const { data, error } = await supabase
-    .from('routes')
-    .select('*')
-    .order('name');
-  
-  if (error) throw error;
-  return data as Route[];
+  console.log("Fetching routes...");
+  try {
+    const { data, error } = await supabase
+      .from('routes')
+      .select('*')
+      .order('name');
+    
+    if (error) {
+      console.error("Error fetching routes:", error);
+      throw error;
+    }
+    
+    console.log("Routes fetched successfully:", data);
+    return data as Route[];
+  } catch (err) {
+    console.error("Error in fetchRoutes:", err);
+    throw err;
+  }
 };
 
 export const getRoute = async (id: string) => {
@@ -65,17 +76,29 @@ export const deleteRoute = async (id: string) => {
 
 // Buses API
 export const fetchBuses = async () => {
-  const { data, error } = await supabase
-    .from('buses')
-    .select('*')
-    .order('registration_number');
-  
-  if (error) throw error;
-  return data as Bus[];
+  console.log("Fetching buses...");
+  try {
+    const { data, error } = await supabase
+      .from('buses')
+      .select('*')
+      .order('registration_number');
+    
+    if (error) {
+      console.error("Error fetching buses:", error);
+      throw error;
+    }
+    
+    console.log("Buses fetched successfully:", data);
+    return data as Bus[];
+  } catch (err) {
+    console.error("Error in fetchBuses:", err);
+    throw err;
+  }
 };
 
 // Schedules API
 export const fetchSchedules = async (date?: string) => {
+  console.log("Fetching schedules for date:", date);
   try {
     let query = supabase
       .from('schedules')
@@ -118,6 +141,28 @@ export const fetchSchedules = async (date?: string) => {
     return data;
   } catch (err) {
     console.error("Error in fetchSchedules:", err);
+    throw err;
+  }
+};
+
+// Create new schedule
+export const createSchedule = async (scheduleData: any) => {
+  console.log("Creating new schedule with data:", scheduleData);
+  try {
+    const { data, error } = await supabase
+      .from('schedules')
+      .insert(scheduleData)
+      .select();
+    
+    if (error) {
+      console.error("Error creating schedule:", error);
+      throw error;
+    }
+    
+    console.log("Schedule created successfully:", data);
+    return data;
+  } catch (err) {
+    console.error("Error in createSchedule:", err);
     throw err;
   }
 };

@@ -34,7 +34,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type StopType = {
   id: string;
@@ -70,6 +71,7 @@ const AddRoute = () => {
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState("details");
+  const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState<RouteFormData>({
     id: "",
@@ -90,7 +92,7 @@ const AddRoute = () => {
       },
     ],
     baseFare: "",
-    currency: "usd",
+    currency: "npr",
     discount: "",
     tax: "",
     amenities: [],
@@ -154,11 +156,11 @@ const AddRoute = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.id || !formData.name || !formData.source || !formData.destination) {
+    if (!formData.name || !formData.source || !formData.destination) {
       toast({
         title: "Missing required fields",
         description: "Please fill in all required fields before saving.",
@@ -167,50 +169,52 @@ const AddRoute = () => {
       return;
     }
     
-    // Get existing routes from localStorage
-    const existingRoutesJson = localStorage.getItem('busRoutes');
-    const existingRoutes = existingRoutesJson ? JSON.parse(existingRoutesJson) : [];
-    
-    // Check for duplicate route ID
-    const isDuplicate = existingRoutes.some((route: any) => route.id === formData.id);
-    if (isDuplicate) {
+    try {
+      setLoading(true);
+      
+      // Convert distance and duration to numbers for database
+      const distanceValue = formData.distance ? parseFloat(formData.distance) : null;
+      const durationValue = formData.duration ? parseInt(formData.duration.split('h')[0].trim(), 10) * 60 : null;
+      
+      // Prepare route data for Supabase
+      const routeData = {
+        name: formData.name,
+        origin: formData.source,
+        destination: formData.destination,
+        distance: distanceValue,
+        duration: durationValue,
+        is_active: formData.status === 'active'
+      };
+      
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('routes')
+        .insert(routeData)
+        .select();
+      
+      if (error) {
+        console.error("Error creating route:", error);
+        throw error;
+      }
+      
+      console.log("Route created successfully:", data);
+      
       toast({
-        title: "Duplicate Route ID",
-        description: `Route with ID ${formData.id} already exists. Please use a different ID.`,
+        title: "Route created successfully",
+        description: "Your new route has been saved to the database and is now active.",
+      });
+      
+      navigate("/routes");
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast({
+        title: "Error creating route",
+        description: "There was a problem saving your route. Please try again.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-    
-    // Prepare route data
-    const newRoute = {
-      id: formData.id,
-      name: formData.name,
-      source: formData.source,
-      destination: formData.destination,
-      distance: `${formData.distance} km`,
-      duration: formData.duration,
-      stops: formData.stops.length - 1, // Exclude source as it's not a stop
-      fare: `$${formData.baseFare}`,
-      status: formData.status,
-      busType: formData.busType,
-      nextDeparture: formData.nextDeparture,
-      // Include other data as needed
-      description: formData.description,
-      amenities: formData.amenities,
-      assignedBus: formData.assignedBus,
-    };
-    
-    // Save to localStorage
-    const updatedRoutes = [...existingRoutes, newRoute];
-    localStorage.setItem('busRoutes', JSON.stringify(updatedRoutes));
-    
-    toast({
-      title: "Route created successfully",
-      description: "Your new route has been created and is now active.",
-    });
-    
-    navigate("/routes");
   };
 
   return (
@@ -265,14 +269,13 @@ const AddRoute = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="routeId">Route ID</Label>
+                    <Label htmlFor="routeId">Route ID (Optional)</Label>
                     <Input
                       id="routeId"
-                      placeholder="e.g. RT001"
+                      placeholder="Leave blank for auto-generated ID"
                       className="bg-zippy-gray border-zippy-lightGray"
                       value={formData.id}
                       onChange={(e) => updateFormData("id", e.target.value)}
-                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -551,13 +554,13 @@ const AddRoute = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="baseFare">Base Fare</Label>
+                    <Label htmlFor="baseFare">Base Fare (NPR)</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="baseFare"
                         type="number"
-                        placeholder="Base ticket price"
+                        placeholder="Base ticket price in NPR"
                         className="bg-zippy-gray border-zippy-lightGray pl-9"
                         value={formData.baseFare}
                         onChange={(e) => updateFormData("baseFare", e.target.value)}
@@ -606,7 +609,6 @@ const AddRoute = () => {
                       className="bg-zippy-gray border-zippy-lightGray"
                       value={formData.tax}
                       onChange={(e) => updateFormData("tax", e.target.value)}
-                      required
                     />
                   </div>
                 </div>
@@ -696,9 +698,22 @@ const AddRoute = () => {
                 <Button
                   type="submit"
                   className="bg-zippy-purple hover:bg-zippy-darkPurple"
+                  disabled={loading}
                 >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Route
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Route
+                    </>
+                  )}
                 </Button>
               </CardFooter>
             </Card>

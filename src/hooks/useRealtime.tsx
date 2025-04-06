@@ -56,9 +56,11 @@ export function useRealtime<T>(
     const setupRealtimeSubscription = () => {
       if (!table) return null;
       
-      // Fix the issue with the channel setup
+      const channelName = `public:${table}`;
+      console.log(`Setting up real-time subscription to ${channelName}`);
+      
       const newChannel = supabase
-        .channel(`public:${table}`)
+        .channel(channelName)
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',

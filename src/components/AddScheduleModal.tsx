@@ -27,9 +27,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { fetchBuses, fetchRoutes } from "@/services/api";
+import { fetchBuses, fetchRoutes, createSchedule } from "@/services/api";
 import { useRealtime } from "@/hooks/useRealtime";
 
 interface AddScheduleModalProps {
@@ -48,8 +47,8 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const { data: routes } = useRealtime<any>('routes', [], ['*'], fetchRoutes);
-  const { data: buses } = useRealtime<any>('buses', [], ['*'], fetchBuses);
+  const { data: routes, loading: loadingRoutes } = useRealtime<any>('routes', [], ['*'], fetchRoutes);
+  const { data: buses, loading: loadingBuses } = useRealtime<any>('buses', [], ['*'], fetchBuses);
 
   useEffect(() => {
     console.log("Routes in modal:", routes);
@@ -67,6 +66,10 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
         fare
       });
 
+      if (!selectedRoute || !selectedBus || !departureTime || !arrivalTime || !fare) {
+        throw new Error("Please fill in all required fields");
+      }
+
       const departureDateTime = new Date(date);
       const [depHours, depMinutes] = departureTime.split(':').map(Number);
       departureDateTime.setHours(depHours, depMinutes, 0, 0);
@@ -80,41 +83,43 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
         arrivalDateTime.setDate(arrivalDateTime.getDate() + 1);
       }
 
-      const selectedBusObj = buses.find(bus => bus.id === selectedBus);
+      const selectedBusObj = buses.find((bus: any) => bus.id === selectedBus);
       const availableSeats = selectedBusObj ? selectedBusObj.capacity : 0;
 
-      const { data, error } = await supabase
-        .from('schedules')
-        .insert({
-          route_id: selectedRoute,
-          bus_id: selectedBus,
-          departure_time: departureDateTime.toISOString(),
-          arrival_time: arrivalDateTime.toISOString(),
-          fare: parseFloat(fare),
-          available_seats: availableSeats,
-          is_active: true
-        })
-        .select();
+      const scheduleData = {
+        route_id: selectedRoute,
+        bus_id: selectedBus,
+        departure_time: departureDateTime.toISOString(),
+        arrival_time: arrivalDateTime.toISOString(),
+        fare: parseFloat(fare),
+        available_seats: availableSeats,
+        is_active: true
+      };
 
-      if (error) {
-        console.error("Supabase insert error:", error);
-        throw error;
-      }
+      // Use the API service to create the schedule
+      const result = await createSchedule(scheduleData);
 
-      console.log("Schedule created successfully:", data);
+      console.log("Schedule created successfully:", result);
 
       toast({
         title: "Schedule created",
-        description: "The new schedule has been successfully created.",
+        description: "The new schedule has been successfully created and saved to the database.",
       });
 
+      // Reset form
+      setDepartureTime("");
+      setArrivalTime("");
+      setSelectedRoute("");
+      setSelectedBus("");
+      setFare("");
+      
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Error creating schedule:", error);
       toast({
         title: "Error",
-        description: "There was an error creating the schedule. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error creating the schedule. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -140,14 +145,16 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
                   <SelectValue placeholder="Select a route" />
                 </SelectTrigger>
                 <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                  {routes && routes.length > 0 ? (
-                    routes.map((route) => (
+                  {loadingRoutes ? (
+                    <SelectItem value="loading" disabled>Loading routes...</SelectItem>
+                  ) : routes && routes.length > 0 ? (
+                    routes.map((route: any) => (
                       <SelectItem key={route.id} value={route.id}>
                         {route.name} ({route.origin} to {route.destination})
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="loading" disabled>Loading routes...</SelectItem>
+                    <SelectItem value="no-routes" disabled>No routes available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -160,14 +167,16 @@ const AddScheduleModal = ({ isOpen, onClose, onSuccess }: AddScheduleModalProps)
                   <SelectValue placeholder="Select a bus" />
                 </SelectTrigger>
                 <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                  {buses && buses.length > 0 ? (
-                    buses.map((bus) => (
+                  {loadingBuses ? (
+                    <SelectItem value="loading" disabled>Loading buses...</SelectItem>
+                  ) : buses && buses.length > 0 ? (
+                    buses.map((bus: any) => (
                       <SelectItem key={bus.id} value={bus.id}>
                         Bus #{bus.registration_number} - {bus.model} ({bus.capacity} seats)
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="loading" disabled>Loading buses...</SelectItem>
+                    <SelectItem value="no-buses" disabled>No buses available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
