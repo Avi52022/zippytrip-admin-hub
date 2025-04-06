@@ -35,6 +35,8 @@ import { Drawer as DrawerPrimitive } from "vaul";
 import { FormProvider, useFormContext, Controller } from "react-hook-form";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast, useToast } from "@/hooks/use-toast";
+import { type DialogProps } from "@radix-ui/react-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { cn } from "@/lib/utils";
 
@@ -666,9 +668,7 @@ Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 // --------------------------------------------------------------
 // Collapsible Component
 // --------------------------------------------------------------
-const Collapsible = CollapsiblePrimitive.Root;
-const CollapsibleTrigger = CollapsiblePrimitive.CollapsibleTrigger;
-const CollapsibleContent = CollapsiblePrimitive.CollapsibleContent;
+// Exported directly from the collapsible.tsx file - no need to redefine here
 
 // --------------------------------------------------------------
 // Command Component
@@ -688,7 +688,9 @@ const Command = React.forwardRef<
 ));
 Command.displayName = CommandPrimitive.displayName;
 
-interface CommandDialogProps extends DialogProps {}
+interface CommandDialogProps extends DialogProps {
+  children?: React.ReactNode;
+}
 
 const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   return (
