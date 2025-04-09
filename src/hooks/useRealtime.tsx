@@ -56,7 +56,7 @@ export function useRealtime<T>(
     const enableRealtimeForTable = async () => {
       try {
         console.log(`Enabling realtime for table: ${table}`);
-        await supabase.rpc('enable_realtime_for_table', { table_name: table });
+        await supabase.rpc('enable_realtime_for_table', { table_name: table as string });
       } catch (error) {
         console.warn(`Error enabling realtime for ${table}:`, error);
         // Continue anyway as the table might already be enabled
@@ -77,7 +77,7 @@ export function useRealtime<T>(
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',
-          table: table 
+          table: table as string 
         }, payload => {
           console.log(`Real-time update received for ${table}:`, payload);
           
