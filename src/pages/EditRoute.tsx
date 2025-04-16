@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -19,12 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Route, Bus, MapPin } from "lucide-react";
-import { getRoute, updateRoute } from "@/services/api";
-import { Database } from "@/integrations/supabase/types";
-
-type RouteUpdate = Partial<Database['public']['Tables']['routes']['Update']>;
+import { CheckCircle2, Route, MapPin } from "lucide-react";
+import { getRoute, updateRoute, RouteUpdate } from "@/services/api/routes";
 
 const EditRoute = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,9 +53,11 @@ const EditRoute = () => {
       
       try {
         setIsLoading(true);
+        console.log("Fetching route:", id);
         const routeData = await getRoute(id);
         
         if (routeData) {
+          console.log("Route data received:", routeData);
           setFormData({
             id: routeData.id,
             name: routeData.name,
@@ -142,6 +139,8 @@ const EditRoute = () => {
         duration: formData.duration ? parseInt(formData.duration) : null,
         is_active: formData.is_active
       };
+      
+      console.log("Updating route with data:", routeData);
       
       // Update in Supabase
       await updateRoute(id, routeData);

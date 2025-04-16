@@ -17,6 +17,9 @@ export function useRealtime<T>(
   const [error, setError] = useState<Error | null>(null);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
+  // Convert table to string for safe usage
+  const tableStr = table.toString();
+
   // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
@@ -27,11 +30,8 @@ export function useRealtime<T>(
         if (fetchFunction) {
           fetchedData = await fetchFunction();
         } else {
-          // Use the utility function to ensure type safety
-          const validTableName = asValidTableName(table.toString());
-          
           const { data: supabaseData, error: supabaseError } = await supabase
-            .from(validTableName)
+            .from(tableStr)
             .select(columns.join(','));
           
           if (supabaseError) throw supabaseError;
@@ -40,7 +40,7 @@ export function useRealtime<T>(
         
         setData(fetchedData);
       } catch (err) {
-        console.error(`Error fetching data from ${table}:`, err);
+        console.error(`Error fetching data from ${tableStr}:`, err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);
@@ -48,19 +48,19 @@ export function useRealtime<T>(
     };
 
     fetchData();
-  }, [table, columns.join(','), fetchFunction]);
+  }, [tableStr, columns.join(','), fetchFunction]);
 
   // Set up real-time subscription
   useEffect(() => {
     // Enable Realtime for the table if not already enabled
     const enableRealtimeForTable = async () => {
       try {
-        console.log(`Enabling realtime for table: ${table}`);
+        console.log(`Enabling realtime for table: ${tableStr}`);
         await supabase.rpc('enable_realtime_for_table', { 
-          table_name: table.toString() 
+          table_name: tableStr
         });
       } catch (error) {
-        console.warn(`Error enabling realtime for ${table}:`, error);
+        console.warn(`Error enabling realtime for ${tableStr}:`, error);
         // Continue anyway as the table might already be enabled
       }
     };
@@ -69,9 +69,9 @@ export function useRealtime<T>(
     
     // Create a new real-time channel
     const setupRealtimeSubscription = () => {
-      if (!table) return null;
+      if (!tableStr) return null;
       
-      const channelName = `public:${table}`;
+      const channelName = `public:${tableStr}`;
       console.log(`Setting up real-time subscription to ${channelName}`);
       
       const newChannel = supabase
@@ -79,9 +79,9 @@ export function useRealtime<T>(
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',
-          table: table.toString()
+          table: tableStr
         }, payload => {
-          console.log(`Real-time update received for ${table}:`, payload);
+          console.log(`Real-time update received for ${tableStr}:`, payload);
           
           const handleChange = async () => {
             try {
@@ -90,24 +90,22 @@ export function useRealtime<T>(
                 const freshData = await fetchFunction();
                 setData(freshData);
               } else {
-                const validTableName = asValidTableName(table.toString());
-                
                 const { data: supabaseData, error: supabaseError } = await supabase
-                  .from(validTableName)
+                  .from(tableStr)
                   .select(columns.join(','));
                 
                 if (supabaseError) throw supabaseError;
                 setData(supabaseData as T[]);
               }
             } catch (err) {
-              console.error(`Error updating data after real-time event on ${table}:`, err);
+              console.error(`Error updating data after real-time event on ${tableStr}:`, err);
             }
           };
           
           handleChange();
         })
         .subscribe(status => {
-          console.log(`Real-time subscription to ${table} status:`, status);
+          console.log(`Real-time subscription to ${tableStr} status:`, status);
         });
       
       return newChannel;
@@ -119,11 +117,11 @@ export function useRealtime<T>(
     // Cleanup subscription on unmount
     return () => {
       if (newChannel) {
-        console.log(`Removing real-time subscription to ${table}`);
+        console.log(`Removing real-time subscription to ${tableStr}`);
         supabase.removeChannel(newChannel);
       }
     };
-  }, [table, columns.join(','), fetchFunction]);
+  }, [tableStr, columns.join(','), fetchFunction]);
 
   // Expose reload function for manual refresh
   const reload = async () => {
@@ -134,10 +132,8 @@ export function useRealtime<T>(
       if (fetchFunction) {
         freshData = await fetchFunction();
       } else {
-        const validTableName = asValidTableName(table.toString());
-        
         const { data: supabaseData, error: supabaseError } = await supabase
-          .from(validTableName)
+          .from(tableStr)
           .select(columns.join(','));
         
         if (supabaseError) throw supabaseError;
@@ -146,7 +142,7 @@ export function useRealtime<T>(
       
       setData(freshData);
     } catch (err) {
-      console.error(`Error reloading data from ${table}:`, err);
+      console.error(`Error reloading data from ${tableStr}:`, err);
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);

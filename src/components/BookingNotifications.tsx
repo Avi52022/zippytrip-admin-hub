@@ -14,6 +14,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { asValidTableName } from '@/utils/tableTypes';
 
+type RouteDetails = {
+  name: string;
+  origin: string;
+  destination: string;
+};
+
+type ScheduleDetails = {
+  departure_time: string;
+  arrival_time: string;
+  routes?: RouteDetails;
+};
+
 type BookingWithDetails = {
   id: string;
   created_at: string;
@@ -22,15 +34,7 @@ type BookingWithDetails = {
   payment_status: string | null;
   payment_method: string | null;
   seat_numbers: string[];
-  schedules?: {
-    departure_time: string;
-    arrival_time: string;
-    routes?: {
-      name: string;
-      origin: string;
-      destination: string;
-    };
-  };
+  schedules?: ScheduleDetails;
 };
 
 const BookingNotifications = () => {
@@ -43,9 +47,8 @@ const BookingNotifications = () => {
   useEffect(() => {
     const fetchRecentBookings = async () => {
       try {
-        const tableName = asValidTableName('bookings');
         const { data, error } = await supabase
-          .from(tableName)
+          .from('bookings')
           .select(`
             *,
             schedules (
@@ -104,9 +107,8 @@ const BookingNotifications = () => {
         async (payload) => {
           try {
             // Fetch the complete booking with related data
-            const tableName = asValidTableName('bookings');
             const { data, error } = await supabase
-              .from(tableName)
+              .from('bookings')
               .select(`
                 *,
                 schedules (

@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, asValidTableName } from "@/utils/tableTypes";
 import { Route } from "./routes";
 import { Bus } from "./buses";
 
@@ -21,13 +20,13 @@ export type Schedule = {
 };
 
 export type ScheduleInsert = Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'routes' | 'buses'>;
-export type ScheduleUpdate = Partial<ScheduleInsert>;
+export type ScheduleUpdate = Partial<Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'routes' | 'buses'>>;
 
 export const fetchSchedules = async (date?: string) => {
   console.log("Fetching schedules for date:", date);
   try {
     let query = supabase
-      .from(asValidTableName('schedules'))
+      .from('schedules')
       .select(`
         *,
         routes (
@@ -73,7 +72,7 @@ export const fetchSchedules = async (date?: string) => {
 
 export const getSchedule = async (id: string) => {
   const { data, error } = await supabase
-    .from(asValidTableName('schedules'))
+    .from('schedules')
     .select(`
       *,
       routes (*),
@@ -86,11 +85,11 @@ export const getSchedule = async (id: string) => {
   return data;
 };
 
-export const createSchedule = async (scheduleData: any) => {
+export const createSchedule = async (scheduleData: ScheduleInsert) => {
   console.log("Creating new schedule with data:", scheduleData);
   try {
     const { data, error } = await supabase
-      .from(asValidTableName('schedules'))
+      .from('schedules')
       .insert(scheduleData)
       .select();
     
@@ -109,7 +108,7 @@ export const createSchedule = async (scheduleData: any) => {
 
 export const updateSchedule = async (id: string, scheduleData: ScheduleUpdate) => {
   const { data, error } = await supabase
-    .from(asValidTableName('schedules'))
+    .from('schedules')
     .update(scheduleData)
     .eq('id', id)
     .select();
@@ -120,7 +119,7 @@ export const updateSchedule = async (id: string, scheduleData: ScheduleUpdate) =
 
 export const deleteSchedule = async (id: string) => {
   const { error } = await supabase
-    .from(asValidTableName('schedules'))
+    .from('schedules')
     .delete()
     .eq('id', id);
   
