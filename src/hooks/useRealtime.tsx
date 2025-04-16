@@ -5,7 +5,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
 // Define valid table names type based on Supabase database schema
-export type TableName = keyof Database['public']['Tables'];
+export type TableName = keyof Database['public']['Tables'] | string;
 
 type FetchFunction<T> = () => Promise<T[]>;
 
@@ -56,7 +56,7 @@ export function useRealtime<T>(
     const enableRealtimeForTable = async () => {
       try {
         console.log(`Enabling realtime for table: ${table}`);
-        await supabase.rpc('enable_realtime_for_table', { table_name: table as string });
+        await supabase.rpc('enable_realtime_for_table', { table_name: table.toString() });
       } catch (error) {
         console.warn(`Error enabling realtime for ${table}:`, error);
         // Continue anyway as the table might already be enabled
@@ -77,7 +77,7 @@ export function useRealtime<T>(
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',
-          table: table as string 
+          table: table.toString()
         }, payload => {
           console.log(`Real-time update received for ${table}:`, payload);
           
