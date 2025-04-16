@@ -31,7 +31,7 @@ export function useRealtime<T>(
           fetchedData = await fetchFunction();
         } else {
           const { data: supabaseData, error: supabaseError } = await supabase
-            .from(table)
+            .from(table as string)
             .select(columns.join(','));
           
           if (supabaseError) throw supabaseError;
@@ -89,7 +89,7 @@ export function useRealtime<T>(
                 setData(freshData);
               } else {
                 const { data: supabaseData, error: supabaseError } = await supabase
-                  .from(table)
+                  .from(table as string)
                   .select(columns.join(','));
                 
                 if (supabaseError) throw supabaseError;
@@ -131,7 +131,7 @@ export function useRealtime<T>(
         freshData = await fetchFunction();
       } else {
         const { data: supabaseData, error: supabaseError } = await supabase
-          .from(table)
+          .from(table as string)
           .select(columns.join(','));
         
         if (supabaseError) throw supabaseError;

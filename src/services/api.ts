@@ -1,20 +1,71 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
-type Route = Database['public']['Tables']['routes']['Row'];
-type RouteInsert = Database['public']['Tables']['routes']['Insert'];
-type RouteUpdate = Database['public']['Tables']['routes']['Update'];
+// Type definitions based on Database types
+type Route = {
+  id: string;
+  name: string;
+  origin: string;
+  destination: string;
+  distance: number | null;
+  duration: number | null;
+  is_active: boolean | null;
+  created_at: string;
+  updated_at: string;
+};
 
-type Bus = Database['public']['Tables']['buses']['Row'];
-type Schedule = Database['public']['Tables']['schedules']['Row'];
-type Booking = Database['public']['Tables']['bookings']['Row'];
+type RouteInsert = Omit<Route, 'id' | 'created_at' | 'updated_at'>;
+type RouteUpdate = Partial<RouteInsert>;
+
+type Bus = {
+  id: string;
+  registration_number: string;
+  model: string | null;
+  capacity: number;
+  amenities: any | null;
+  is_active: boolean | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type Schedule = {
+  id: string;
+  route_id: string;
+  bus_id: string;
+  departure_time: string;
+  arrival_time: string;
+  fare: number;
+  available_seats: number;
+  is_active: boolean | null;
+  created_at: string;
+  updated_at: string;
+  routes?: Route;
+  buses?: Bus;
+};
+
+type Booking = {
+  id: string;
+  user_id: string;
+  schedule_id: string;
+  booking_date: string;
+  total_fare: number;
+  seat_numbers: string[];
+  status: string | null;
+  payment_status: string | null;
+  payment_method: string | null;
+  payment_id: string | null;
+  created_at: string;
+  updated_at: string;
+  schedules?: Schedule;
+};
 
 // Routes API
 export const fetchRoutes = async () => {
   console.log("Fetching routes...");
   try {
     const { data, error } = await supabase
-      .from('routes')
+      .from('routes' as string)
       .select('*')
       .order('name');
     
@@ -33,7 +84,7 @@ export const fetchRoutes = async () => {
 
 export const getRoute = async (id: string) => {
   const { data, error } = await supabase
-    .from('routes')
+    .from('routes' as string)
     .select('*')
     .eq('id', id)
     .single();
@@ -46,7 +97,7 @@ export const createRoute = async (routeData: RouteInsert) => {
   console.log("Creating route with data:", routeData);
   try {
     const { data, error } = await supabase
-      .from('routes')
+      .from('routes' as string)
       .insert(routeData)
       .select();
     
@@ -65,7 +116,7 @@ export const createRoute = async (routeData: RouteInsert) => {
 
 export const updateRoute = async (id: string, routeData: RouteUpdate) => {
   const { data, error } = await supabase
-    .from('routes')
+    .from('routes' as string)
     .update(routeData)
     .eq('id', id)
     .select();
@@ -76,7 +127,7 @@ export const updateRoute = async (id: string, routeData: RouteUpdate) => {
 
 export const deleteRoute = async (id: string) => {
   const { error } = await supabase
-    .from('routes')
+    .from('routes' as string)
     .delete()
     .eq('id', id);
   
@@ -89,7 +140,7 @@ export const fetchBuses = async () => {
   console.log("Fetching buses...");
   try {
     const { data, error } = await supabase
-      .from('buses')
+      .from('buses' as string)
       .select('*')
       .order('registration_number');
     
@@ -111,7 +162,7 @@ export const fetchSchedules = async (date?: string) => {
   console.log("Fetching schedules for date:", date);
   try {
     let query = supabase
-      .from('schedules')
+      .from('schedules' as string)
       .select(`
         *,
         routes (
@@ -160,7 +211,7 @@ export const createSchedule = async (scheduleData: any) => {
   console.log("Creating new schedule with data:", scheduleData);
   try {
     const { data, error } = await supabase
-      .from('schedules')
+      .from('schedules' as string)
       .insert(scheduleData)
       .select();
     
@@ -180,7 +231,7 @@ export const createSchedule = async (scheduleData: any) => {
 // Bookings API
 export const fetchBookings = async () => {
   const { data, error } = await supabase
-    .from('bookings')
+    .from('bookings' as string)
     .select(`
       *,
       schedules (
@@ -208,7 +259,7 @@ export const fetchBookings = async () => {
 
 export const getUserBookings = async (userId: string) => {
   const { data, error } = await supabase
-    .from('bookings')
+    .from('bookings' as string)
     .select(`
       *,
       schedules (
@@ -263,7 +314,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     // First, make the table replica identity full to get complete data in changes
     const { error: replicaError } = await supabase.rpc(
       'set_replica_identity_full', 
-      { table_name: tableName }
+      { table_name: tableName.toString() }
     );
     
     if (replicaError) {
@@ -273,7 +324,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     // Then add the table to the realtime publication
     const { error } = await supabase.rpc(
       'add_table_to_publication', 
-      { table_name: tableName }
+      { table_name: tableName.toString() }
     );
     
     if (error) {

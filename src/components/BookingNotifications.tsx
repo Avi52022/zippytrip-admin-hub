@@ -14,7 +14,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Database } from '@/integrations/supabase/types';
 
-type BookingWithDetails = Database['public']['Tables']['bookings']['Row'] & {
+type BookingWithDetails = {
+  id: string;
+  created_at: string;
+  total_fare: number;
+  status: string | null;
+  payment_status: string | null;
+  payment_method: string | null;
+  seat_numbers: string[];
   schedules?: {
     departure_time: string;
     arrival_time: string;
@@ -37,7 +44,7 @@ const BookingNotifications = () => {
     const fetchRecentBookings = async () => {
       try {
         const { data, error } = await supabase
-          .from('bookings')
+          .from('bookings' as string)
           .select(`
             *,
             schedules (
@@ -81,7 +88,7 @@ const BookingNotifications = () => {
           try {
             // Fetch the complete booking with related data
             const { data, error } = await supabase
-              .from('bookings')
+              .from('bookings' as string)
               .select(`
                 *,
                 schedules (
@@ -106,8 +113,10 @@ const BookingNotifications = () => {
             });
 
             // Update notifications state
-            setNotifications(prev => [data as BookingWithDetails, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            if (data) {
+              setNotifications(prev => [data as BookingWithDetails, ...prev]);
+              setUnreadCount(prev => prev + 1);
+            }
           } catch (error) {
             console.error('Error processing new booking notification:', error);
           }
