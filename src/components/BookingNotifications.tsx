@@ -14,6 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Database } from '@/integrations/supabase/types';
 
+type ValidTableName = keyof Database['public']['Tables'];
+
 type BookingWithDetails = {
   id: string;
   created_at: string;
@@ -44,7 +46,7 @@ const BookingNotifications = () => {
     const fetchRecentBookings = async () => {
       try {
         const { data, error } = await supabase
-          .from('bookings' as string)
+          .from('bookings' as ValidTableName)
           .select(`
             *,
             schedules (
@@ -63,8 +65,24 @@ const BookingNotifications = () => {
         if (error) throw error;
         
         // Set notifications with all as unread initially
-        setNotifications(data || []);
-        setUnreadCount(data?.length || 0);
+        // Convert the data to match BookingWithDetails shape
+        const typedNotifications: BookingWithDetails[] = (data || []).map((booking: any) => ({
+          id: booking.id,
+          created_at: booking.created_at,
+          total_fare: booking.total_fare,
+          status: booking.status,
+          payment_status: booking.payment_status,
+          payment_method: booking.payment_method,
+          seat_numbers: booking.seat_numbers || [],
+          schedules: booking.schedules ? {
+            departure_time: booking.schedules.departure_time,
+            arrival_time: booking.schedules.arrival_time,
+            routes: booking.schedules.routes
+          } : undefined
+        }));
+        
+        setNotifications(typedNotifications);
+        setUnreadCount(typedNotifications.length || 0);
       } catch (error) {
         console.error('Error fetching recent bookings:', error);
       }
@@ -88,7 +106,7 @@ const BookingNotifications = () => {
           try {
             // Fetch the complete booking with related data
             const { data, error } = await supabase
-              .from('bookings' as string)
+              .from('bookings' as ValidTableName)
               .select(`
                 *,
                 schedules (
@@ -107,14 +125,30 @@ const BookingNotifications = () => {
             if (error) throw error;
 
             // Show toast notification
-            toast({
-              title: "New Booking Received",
-              description: `Route: ${data?.schedules?.routes?.name || 'Unknown route'}`,
-            });
+            if (data && data.schedules && data.schedules.routes) {
+              toast({
+                title: "New Booking Received",
+                description: `Route: ${data.schedules.routes.name || 'Unknown route'}`,
+              });
 
-            // Update notifications state
-            if (data) {
-              setNotifications(prev => [data as BookingWithDetails, ...prev]);
+              // Convert to BookingWithDetails format
+              const newBooking: BookingWithDetails = {
+                id: data.id,
+                created_at: data.created_at,
+                total_fare: data.total_fare,
+                status: data.status,
+                payment_status: data.payment_status,
+                payment_method: data.payment_method,
+                seat_numbers: data.seat_numbers || [],
+                schedules: {
+                  departure_time: data.schedules.departure_time,
+                  arrival_time: data.schedules.arrival_time,
+                  routes: data.schedules.routes
+                }
+              };
+
+              // Update notifications state
+              setNotifications(prev => [newBooking, ...prev]);
               setUnreadCount(prev => prev + 1);
             }
           } catch (error) {
@@ -213,7 +247,7 @@ const BookingNotifications = () => {
                   
                   <div className="flex justify-between mb-2">
                     <div className="text-xs">
-                      <span className="text-muted-foreground">Departure:</span> {formatDateTime(booking.schedules?.departure_time || '')}
+                      <span className="text-muted-foreground">Departure:</span> {booking.schedules?.departure_time ? formatDateTime(booking.schedules.departure_time) : 'Unknown'}
                     </div>
                   </div>
                   

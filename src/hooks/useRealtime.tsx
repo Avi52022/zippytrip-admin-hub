@@ -7,6 +7,9 @@ import { Database } from '@/integrations/supabase/types';
 // Define valid table names type based on Supabase database schema
 export type TableName = keyof Database['public']['Tables'] | string;
 
+// Define valid table literal types
+type ValidTableName = keyof Database['public']['Tables'];
+
 type FetchFunction<T> = () => Promise<T[]>;
 
 export function useRealtime<T>(
@@ -30,8 +33,9 @@ export function useRealtime<T>(
         if (fetchFunction) {
           fetchedData = await fetchFunction();
         } else {
+          // Use type assertion for the table name
           const { data: supabaseData, error: supabaseError } = await supabase
-            .from(table as string)
+            .from(table as ValidTableName)
             .select(columns.join(','));
           
           if (supabaseError) throw supabaseError;
@@ -89,7 +93,7 @@ export function useRealtime<T>(
                 setData(freshData);
               } else {
                 const { data: supabaseData, error: supabaseError } = await supabase
-                  .from(table as string)
+                  .from(table as ValidTableName)
                   .select(columns.join(','));
                 
                 if (supabaseError) throw supabaseError;
@@ -131,7 +135,7 @@ export function useRealtime<T>(
         freshData = await fetchFunction();
       } else {
         const { data: supabaseData, error: supabaseError } = await supabase
-          .from(table as string)
+          .from(table as ValidTableName)
           .select(columns.join(','));
         
         if (supabaseError) throw supabaseError;

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { ValidTableName, asValidTableName } from "@/utils/tableTypes";
 
 // Type definitions based on Database types
 type Route = {
@@ -65,7 +66,7 @@ export const fetchRoutes = async () => {
   console.log("Fetching routes...");
   try {
     const { data, error } = await supabase
-      .from('routes' as string)
+      .from(asValidTableName('routes'))
       .select('*')
       .order('name');
     
@@ -84,7 +85,7 @@ export const fetchRoutes = async () => {
 
 export const getRoute = async (id: string) => {
   const { data, error } = await supabase
-    .from('routes' as string)
+    .from(asValidTableName('routes'))
     .select('*')
     .eq('id', id)
     .single();
@@ -97,7 +98,7 @@ export const createRoute = async (routeData: RouteInsert) => {
   console.log("Creating route with data:", routeData);
   try {
     const { data, error } = await supabase
-      .from('routes' as string)
+      .from(asValidTableName('routes'))
       .insert(routeData)
       .select();
     
@@ -116,7 +117,7 @@ export const createRoute = async (routeData: RouteInsert) => {
 
 export const updateRoute = async (id: string, routeData: RouteUpdate) => {
   const { data, error } = await supabase
-    .from('routes' as string)
+    .from(asValidTableName('routes'))
     .update(routeData)
     .eq('id', id)
     .select();
@@ -127,7 +128,7 @@ export const updateRoute = async (id: string, routeData: RouteUpdate) => {
 
 export const deleteRoute = async (id: string) => {
   const { error } = await supabase
-    .from('routes' as string)
+    .from(asValidTableName('routes'))
     .delete()
     .eq('id', id);
   
@@ -140,7 +141,7 @@ export const fetchBuses = async () => {
   console.log("Fetching buses...");
   try {
     const { data, error } = await supabase
-      .from('buses' as string)
+      .from(asValidTableName('buses'))
       .select('*')
       .order('registration_number');
     
@@ -162,7 +163,7 @@ export const fetchSchedules = async (date?: string) => {
   console.log("Fetching schedules for date:", date);
   try {
     let query = supabase
-      .from('schedules' as string)
+      .from(asValidTableName('schedules'))
       .select(`
         *,
         routes (
@@ -211,7 +212,7 @@ export const createSchedule = async (scheduleData: any) => {
   console.log("Creating new schedule with data:", scheduleData);
   try {
     const { data, error } = await supabase
-      .from('schedules' as string)
+      .from(asValidTableName('schedules'))
       .insert(scheduleData)
       .select();
     
@@ -231,7 +232,7 @@ export const createSchedule = async (scheduleData: any) => {
 // Bookings API
 export const fetchBookings = async () => {
   const { data, error } = await supabase
-    .from('bookings' as string)
+    .from(asValidTableName('bookings'))
     .select(`
       *,
       schedules (
@@ -259,7 +260,7 @@ export const fetchBookings = async () => {
 
 export const getUserBookings = async (userId: string) => {
   const { data, error } = await supabase
-    .from('bookings' as string)
+    .from(asValidTableName('bookings'))
     .select(`
       *,
       schedules (
@@ -314,7 +315,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     // First, make the table replica identity full to get complete data in changes
     const { error: replicaError } = await supabase.rpc(
       'set_replica_identity_full', 
-      { table_name: tableName.toString() }
+      { table_name: tableName }
     );
     
     if (replicaError) {
@@ -324,7 +325,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     // Then add the table to the realtime publication
     const { error } = await supabase.rpc(
       'add_table_to_publication', 
-      { table_name: tableName.toString() }
+      { table_name: tableName }
     );
     
     if (error) {
