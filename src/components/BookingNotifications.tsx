@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Check, AlertTriangle } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -12,9 +12,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { Database } from '@/integrations/supabase/types';
-
-type ValidTableName = keyof Database['public']['Tables'];
+import { asValidTableName } from '@/utils/tableTypes';
 
 type BookingWithDetails = {
   id: string;
@@ -45,8 +43,9 @@ const BookingNotifications = () => {
   useEffect(() => {
     const fetchRecentBookings = async () => {
       try {
+        const tableName = asValidTableName('bookings');
         const { data, error } = await supabase
-          .from('bookings' as ValidTableName)
+          .from(tableName)
           .select(`
             *,
             schedules (
@@ -105,8 +104,9 @@ const BookingNotifications = () => {
         async (payload) => {
           try {
             // Fetch the complete booking with related data
+            const tableName = asValidTableName('bookings');
             const { data, error } = await supabase
-              .from('bookings' as ValidTableName)
+              .from(tableName)
               .select(`
                 *,
                 schedules (
@@ -123,34 +123,34 @@ const BookingNotifications = () => {
               .single();
 
             if (error) throw error;
+            if (!data) return;
 
             // Show toast notification
-            if (data && data.schedules && data.schedules.routes) {
-              toast({
-                title: "New Booking Received",
-                description: `Route: ${data.schedules.routes.name || 'Unknown route'}`,
-              });
+            const routeName = data.schedules?.routes?.name || 'Unknown route';
+            toast({
+              title: "New Booking Received",
+              description: `Route: ${routeName}`,
+            });
 
-              // Convert to BookingWithDetails format
-              const newBooking: BookingWithDetails = {
-                id: data.id,
-                created_at: data.created_at,
-                total_fare: data.total_fare,
-                status: data.status,
-                payment_status: data.payment_status,
-                payment_method: data.payment_method,
-                seat_numbers: data.seat_numbers || [],
-                schedules: {
-                  departure_time: data.schedules.departure_time,
-                  arrival_time: data.schedules.arrival_time,
-                  routes: data.schedules.routes
-                }
-              };
+            // Convert to BookingWithDetails format
+            const newBooking: BookingWithDetails = {
+              id: data.id,
+              created_at: data.created_at,
+              total_fare: data.total_fare,
+              status: data.status,
+              payment_status: data.payment_status,
+              payment_method: data.payment_method,
+              seat_numbers: data.seat_numbers || [],
+              schedules: data.schedules ? {
+                departure_time: data.schedules.departure_time,
+                arrival_time: data.schedules.arrival_time,
+                routes: data.schedules.routes
+              } : undefined
+            };
 
-              // Update notifications state
-              setNotifications(prev => [newBooking, ...prev]);
-              setUnreadCount(prev => prev + 1);
-            }
+            // Update notifications state
+            setNotifications(prev => [newBooking, ...prev]);
+            setUnreadCount(prev => prev + 1);
           } catch (error) {
             console.error('Error processing new booking notification:', error);
           }
@@ -171,7 +171,9 @@ const BookingNotifications = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return <Badge variant="outline">Unknown</Badge>;
+    
     switch (status) {
       case 'confirmed':
         return <Badge variant="outline" className="border-green-500 text-green-500">Confirmed</Badge>;
@@ -186,7 +188,9 @@ const BookingNotifications = () => {
     }
   };
 
-  const getPaymentStatusBadge = (status: string) => {
+  const getPaymentStatusBadge = (status: string | null) => {
+    if (!status) return <Badge variant="outline">Unknown</Badge>;
+    
     switch (status) {
       case 'paid':
         return <Badge variant="outline" className="border-green-500 text-green-500">Paid</Badge>;
@@ -262,8 +266,8 @@ const BookingNotifications = () => {
                   
                   <div className="flex justify-between pt-2">
                     <div className="flex gap-2">
-                      {getStatusBadge(booking.status || 'pending')}
-                      {getPaymentStatusBadge(booking.payment_status || 'pending')}
+                      {getStatusBadge(booking.status)}
+                      {getPaymentStatusBadge(booking.payment_status)}
                     </div>
                   </div>
                 </div>

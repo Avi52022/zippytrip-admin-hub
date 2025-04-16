@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { Database } from '@/integrations/supabase/types';
 import { ValidTableName, asValidTableName } from '@/utils/tableTypes';
 
 type FetchFunction<T> = () => Promise<T[]>;
