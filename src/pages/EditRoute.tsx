@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Route, Bus, MapPin } from "lucide-react";
+import { getRoute, updateRoute } from "@/services/api";
+import { Database } from "@/integrations/supabase/types";
+
+type RouteUpdate = Partial<Database['public']['Tables']['routes']['Update']>;
 
 const EditRoute = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,39 +34,60 @@ const EditRoute = () => {
   const [formData, setFormData] = useState({
     id: "",
     name: "",
-    source: "",
+    origin: "",
     destination: "",
     distance: "",
     duration: "",
-    stops: "",
-    fare: "",
-    status: "active",
-    busType: "Standard",
-    nextDeparture: "",
-    description: ""
+    is_active: true
   });
   
   const [isLoading, setIsLoading] = useState(false);
   
   // Fetch route data on load
   useEffect(() => {
-    const fetchRouteData = () => {
-      const savedRoutes = JSON.parse(localStorage.getItem("busRoutes") || "[]");
-      const routeData = savedRoutes.find(route => route.id === id);
-      
-      if (routeData) {
-        setFormData({
-          ...routeData,
-          stops: routeData.stops.toString(),
-          description: routeData.description || ""
-        });
-      } else {
+    const fetchRouteData = async () => {
+      if (!id) {
         toast({
-          title: "Route not found",
-          description: "The route you're trying to edit doesn't exist.",
+          title: "Invalid route ID",
+          description: "No route ID provided.",
           variant: "destructive"
         });
         navigate("/routes");
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        const routeData = await getRoute(id);
+        
+        if (routeData) {
+          setFormData({
+            id: routeData.id,
+            name: routeData.name,
+            origin: routeData.origin,
+            destination: routeData.destination,
+            distance: routeData.distance?.toString() || "",
+            duration: routeData.duration?.toString() || "",
+            is_active: routeData.is_active || false
+          });
+        } else {
+          toast({
+            title: "Route not found",
+            description: "The route you're trying to edit doesn't exist.",
+            variant: "destructive"
+          });
+          navigate("/routes");
+        }
+      } catch (error) {
+        console.error("Error fetching route:", error);
+        toast({
+          title: "Error loading route",
+          description: "Failed to load route details.",
+          variant: "destructive"
+        });
+        navigate("/routes");
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -75,51 +100,62 @@ const EditRoute = () => {
   };
   
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === "status") {
+      const isActive = value === "active";
+      setFormData(prev => ({ ...prev, is_active: isActive }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
       // Validate inputs
-      if (!formData.name || !formData.source || !formData.destination || !formData.fare) {
+      if (!formData.name || !formData.origin || !formData.destination) {
         toast({
           title: "Validation error",
-          description: "Please fill all required fields.",
+          description: "Please fill all required fields: name, origin, and destination.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
       
-      // Get existing routes from localStorage
-      const savedRoutes = JSON.parse(localStorage.getItem("busRoutes") || "[]");
+      if (!id) {
+        toast({
+          title: "Invalid route ID",
+          description: "No route ID provided.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
       
-      // Find and update the route
-      const updatedRoutes = savedRoutes.map(route => {
-        if (route.id === id) {
-          return {
-            ...formData,
-            stops: parseInt(formData.stops),
-          };
-        }
-        return route;
-      });
+      const routeData: RouteUpdate = {
+        name: formData.name,
+        origin: formData.origin,
+        destination: formData.destination,
+        distance: formData.distance ? parseFloat(formData.distance) : null,
+        duration: formData.duration ? parseInt(formData.duration) : null,
+        is_active: formData.is_active
+      };
       
-      // Save to localStorage
-      localStorage.setItem("busRoutes", JSON.stringify(updatedRoutes));
+      // Update in Supabase
+      await updateRoute(id, routeData);
       
       // Show success toast
       toast({
         title: "Route updated",
-        description: "The route has been updated successfully.",
+        description: "The route has been updated successfully."
       });
       
       // Redirect to routes page
       navigate("/routes");
     } catch (error) {
+      console.error("Error updating route:", error);
       toast({
         title: "Error",
         description: "An error occurred while updating the route.",
@@ -166,21 +202,19 @@ const EditRoute = () => {
                   id="id"
                   name="id"
                   value={formData.id}
-                  onChange={handleInputChange}
-                  placeholder="R001"
                   disabled
                   className="bg-zippy-gray border-zippy-lightGray opacity-70"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="source">Source</Label>
+                <Label htmlFor="origin">Origin</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="source"
-                    name="source"
-                    value={formData.source}
+                    id="origin"
+                    name="origin"
+                    value={formData.origin}
                     onChange={handleInputChange}
                     placeholder="Delhi"
                     className="pl-9 bg-zippy-gray border-zippy-lightGray"
@@ -204,74 +238,27 @@ const EditRoute = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="distance">Distance</Label>
+                <Label htmlFor="distance">Distance (km)</Label>
                 <Input
                   id="distance"
                   name="distance"
                   value={formData.distance}
                   onChange={handleInputChange}
-                  placeholder="1400 km"
+                  placeholder="1400"
                   className="bg-zippy-gray border-zippy-lightGray"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="duration">Duration</Label>
+                <Label htmlFor="duration">Duration (minutes)</Label>
                 <Input
                   id="duration"
                   name="duration"
                   value={formData.duration}
                   onChange={handleInputChange}
-                  placeholder="16h 30m"
+                  placeholder="990"
                   className="bg-zippy-gray border-zippy-lightGray"
                 />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="stops">Number of Stops</Label>
-                <Input
-                  id="stops"
-                  name="stops"
-                  type="number"
-                  value={formData.stops}
-                  onChange={handleInputChange}
-                  placeholder="5"
-                  min="0"
-                  className="bg-zippy-gray border-zippy-lightGray"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="fare">Fare</Label>
-                <Input
-                  id="fare"
-                  name="fare"
-                  value={formData.fare}
-                  onChange={handleInputChange}
-                  placeholder="NPR 2500"
-                  className="bg-zippy-gray border-zippy-lightGray"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="busType">Bus Type</Label>
-                <div className="relative">
-                  <Bus className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Select
-                    value={formData.busType}
-                    onValueChange={(value) => handleSelectChange("busType", value)}
-                  >
-                    <SelectTrigger className="pl-9 bg-zippy-gray border-zippy-lightGray">
-                      <SelectValue placeholder="Select bus type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zippy-darkGray border-zippy-gray">
-                      <SelectItem value="Standard">Standard</SelectItem>
-                      <SelectItem value="Luxury">Luxury</SelectItem>
-                      <SelectItem value="Sleeper">Sleeper</SelectItem>
-                      <SelectItem value="Mini">Mini</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
               
               <div className="space-y-2">
@@ -279,7 +266,7 @@ const EditRoute = () => {
                 <div className="relative">
                   <CheckCircle2 className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Select
-                    value={formData.status}
+                    value={formData.is_active ? "active" : "inactive"}
                     onValueChange={(value) => handleSelectChange("status", value)}
                   >
                     <SelectTrigger className="pl-9 bg-zippy-gray border-zippy-lightGray">
@@ -287,36 +274,11 @@ const EditRoute = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-zippy-darkGray border-zippy-gray">
                       <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="nextDeparture">Next Departure</Label>
-                <Input
-                  id="nextDeparture"
-                  name="nextDeparture"
-                  value={formData.nextDeparture}
-                  onChange={handleInputChange}
-                  placeholder="Today, 10:30 PM"
-                  className="bg-zippy-gray border-zippy-lightGray"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Route Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Enter any additional details about this route..."
-                className="min-h-[100px] bg-zippy-gray border-zippy-lightGray"
-              />
             </div>
             
             <div className="flex justify-end space-x-4">

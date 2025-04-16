@@ -3,17 +3,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
-
-// Define valid table names type based on Supabase database schema
-export type TableName = keyof Database['public']['Tables'] | string;
-
-// Define valid table literal types
-type ValidTableName = keyof Database['public']['Tables'];
+import { ValidTableName, asValidTableName } from '@/utils/tableTypes';
 
 type FetchFunction<T> = () => Promise<T[]>;
 
 export function useRealtime<T>(
-  table: TableName,
+  table: ValidTableName | string,
   initialData: T[] = [],
   columns: string[] = ['*'],
   fetchFunction?: FetchFunction<T>
@@ -33,9 +28,11 @@ export function useRealtime<T>(
         if (fetchFunction) {
           fetchedData = await fetchFunction();
         } else {
-          // Use type assertion for the table name
+          // Use the utility function to ensure type safety
+          const validTableName = asValidTableName(table.toString());
+          
           const { data: supabaseData, error: supabaseError } = await supabase
-            .from(table as ValidTableName)
+            .from(validTableName)
             .select(columns.join(','));
           
           if (supabaseError) throw supabaseError;
@@ -60,7 +57,9 @@ export function useRealtime<T>(
     const enableRealtimeForTable = async () => {
       try {
         console.log(`Enabling realtime for table: ${table}`);
-        await supabase.rpc('enable_realtime_for_table', { table_name: table.toString() });
+        await supabase.rpc('enable_realtime_for_table', { 
+          table_name: table.toString() 
+        });
       } catch (error) {
         console.warn(`Error enabling realtime for ${table}:`, error);
         // Continue anyway as the table might already be enabled
@@ -92,8 +91,10 @@ export function useRealtime<T>(
                 const freshData = await fetchFunction();
                 setData(freshData);
               } else {
+                const validTableName = asValidTableName(table.toString());
+                
                 const { data: supabaseData, error: supabaseError } = await supabase
-                  .from(table as ValidTableName)
+                  .from(validTableName)
                   .select(columns.join(','));
                 
                 if (supabaseError) throw supabaseError;
@@ -134,8 +135,10 @@ export function useRealtime<T>(
       if (fetchFunction) {
         freshData = await fetchFunction();
       } else {
+        const validTableName = asValidTableName(table.toString());
+        
         const { data: supabaseData, error: supabaseError } = await supabase
-          .from(table as ValidTableName)
+          .from(validTableName)
           .select(columns.join(','));
         
         if (supabaseError) throw supabaseError;
