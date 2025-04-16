@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { AreaChart, BarChart, Bus, DollarSign, MapPin, Route, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +16,11 @@ import {
 import { fetchRoutes, fetchBuses, fetchSchedules, fetchBookings } from "@/services/api";
 import { useRealtime } from "@/hooks/useRealtime";
 import { Database } from "@/integrations/supabase/types";
+import { Route as RouteType } from "@/services/api/routes";
+import { ScheduleWithRelations } from "@/services/api/schedules";
+import { BookingWithRelations } from "@/services/api/bookings";
+import { Bus as BusType } from "@/services/api/buses";
 
-// Define proper types for chart data
 interface RevenueDataPoint {
   name: string;
   revenue: number;
@@ -35,7 +37,6 @@ interface RoutePerformance {
   passengers: number;
 }
 
-// Define specific types for data returned by each API
 type RouteData = Database['public']['Tables']['routes']['Row'];
 type BusData = Database['public']['Tables']['buses']['Row'];
 type ScheduleData = Database['public']['Tables']['schedules']['Row'] & {
@@ -47,20 +48,17 @@ type BookingData = Database['public']['Tables']['bookings']['Row'] & {
 };
 
 const Dashboard = () => {
-  // Use real-time hooks for all our data with specific types
-  const { data: routes } = useRealtime<RouteData>('routes', [], ['*'], fetchRoutes);
-  const { data: buses } = useRealtime<BusData>('buses', [], ['*'], fetchBuses);
-  const { data: schedules } = useRealtime<ScheduleData>('schedules', [], ['*'], () => fetchSchedules());
-  const { data: bookings } = useRealtime<BookingData>('bookings', [], ['*'], fetchBookings);
+  const { data: routes } = useRealtime<RouteType>('routes', [], ['*'], fetchRoutes);
+  const { data: buses } = useRealtime<BusType>('buses', [], ['*'], fetchBuses);
+  const { data: schedules } = useRealtime<ScheduleWithRelations>('schedules', [], ['*'], fetchSchedules);
+  const { data: bookings } = useRealtime<BookingWithRelations>('bookings', [], ['*'], fetchBookings);
 
-  // Calculate revenue data based on bookings
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
   
   useEffect(() => {
     if (bookings && bookings.length > 0) {
-      // Group bookings by month and sum the total_fare
       const revenueByMonth = bookings.reduce<Record<string, number>>((acc, booking) => {
-        const date = new Date(booking.created_at); // Use created_at instead of booking_date
+        const date = new Date(booking.created_at);
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const month = monthNames[date.getMonth()];
         
@@ -72,7 +70,6 @@ const Dashboard = () => {
         return acc;
       }, {});
 
-      // Convert to array format for charts
       const chartData = Object.entries(revenueByMonth).map(([name, revenue]) => ({
         name,
         revenue: Math.round(revenue)
@@ -88,7 +85,6 @@ const Dashboard = () => {
         { name: "Jul", revenue: 7000 },
       ]);
     } else {
-      // Default data if no bookings
       setRevenueData([
         { name: "Jan", revenue: 4000 },
         { name: "Feb", revenue: 3000 },
@@ -101,14 +97,12 @@ const Dashboard = () => {
     }
   }, [bookings]);
 
-  // Calculate passengers data based on bookings
   const [passengersData, setPassengersData] = useState<PassengersDataPoint[]>([]);
   
   useEffect(() => {
     if (bookings && bookings.length > 0) {
-      // Group bookings by day of week and count passengers
       const passengersByDay = bookings.reduce<Record<string, number>>((acc, booking) => {
-        const date = new Date(booking.created_at); // Use created_at instead of booking_date
+        const date = new Date(booking.created_at);
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const day = dayNames[date.getDay()];
         
@@ -116,12 +110,10 @@ const Dashboard = () => {
           acc[day] = 0;
         }
         
-        // Count number of seats as passengers
         acc[day] += booking.seat_numbers?.length || 1;
         return acc;
       }, {});
 
-      // Convert to array format for charts
       const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       const chartData = dayOrder.map(day => ({
         name: day,
@@ -130,7 +122,6 @@ const Dashboard = () => {
 
       setPassengersData(chartData);
     } else {
-      // Default data if no bookings
       setPassengersData([
         { name: "Mon", passengers: 240 },
         { name: "Tue", passengers: 300 },
@@ -143,19 +134,14 @@ const Dashboard = () => {
     }
   }, [bookings]);
 
-  // Calculate route performance data
   const [routePerformance, setRoutePerformance] = useState<RoutePerformance[]>([]);
   
   useEffect(() => {
     if (routes && schedules && bookings && schedules.length > 0 && bookings.length > 0) {
-      // Group bookings by route and calculate revenue and passengers
       const performanceByRoute: Record<string, RoutePerformance> = {};
       
       bookings.forEach(booking => {
-        // Skip if we don't have schedules data for this booking
         if (!booking.schedules) return;
-        
-        // Skip if the route information is missing
         if (!booking.schedules.routes) return;
         
         const routeId = booking.schedules.route_id;
@@ -173,12 +159,10 @@ const Dashboard = () => {
         performanceByRoute[routeId].passengers += booking.seat_numbers?.length || 1;
       });
 
-      // Convert to array and sort by revenue
       let performanceData = Object.values(performanceByRoute)
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5);
       
-      // Round revenue values
       performanceData = performanceData.map(item => ({
         ...item,
         revenue: Math.round(item.revenue)
@@ -192,7 +176,6 @@ const Dashboard = () => {
         { name: "Jaipur-Delhi", revenue: 4900, passengers: 210 },
       ]);
     } else {
-      // Default data
       setRoutePerformance([
         { name: "Delhi-Mumbai", revenue: 8500, passengers: 320 },
         { name: "Bangalore-Chennai", revenue: 6200, passengers: 250 },
@@ -203,14 +186,11 @@ const Dashboard = () => {
     }
   }, [routes, schedules, bookings]);
 
-  // Calculate total revenue
   const totalRevenue = bookings?.reduce((sum, booking) => sum + Number(booking.total_fare), 0) || 45231.89;
   
-  // Create activity feed from real data
   const generateActivityItems = () => {
     const activities = [];
     
-    // Add recent bookings
     if (bookings) {
       bookings.slice(0, 2).forEach(booking => {
         activities.push({
@@ -222,7 +202,6 @@ const Dashboard = () => {
       });
     }
     
-    // Add bus updates
     if (buses) {
       buses.slice(0, 2).forEach(bus => {
         activities.push({
@@ -234,7 +213,6 @@ const Dashboard = () => {
       });
     }
     
-    // Add route updates
     if (routes) {
       routes.slice(0, 1).forEach(route => {
         activities.push({
@@ -246,7 +224,6 @@ const Dashboard = () => {
       });
     }
     
-    // Sort by time
     return activities
       .sort((a, b) => a.time - b.time)
       .slice(0, 5);

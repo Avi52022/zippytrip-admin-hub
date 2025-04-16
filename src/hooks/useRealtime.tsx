@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { ValidTableName, isValidTableName, castToValidTableName } from '@/utils/tableTypes';
+import { ValidTableName, isValidTableName, castToValidTableName, fromSafeTable } from '@/utils/tableTypes';
 
 type FetchFunction<T> = () => Promise<T[]>;
 
@@ -38,10 +38,10 @@ export function useRealtime<T>(
           }
           
           // Cast to ValidTableName for type safety with Supabase
-          const tableNameForQuery = castToValidTableName(validatedTable);
+          const safeTable = fromSafeTable(validatedTable);
           
           const { data: supabaseData, error: supabaseError } = await supabase
-            .from(tableNameForQuery)
+            .from(safeTable)
             .select(columns.join(','));
           
           if (supabaseError) throw supabaseError;
@@ -73,10 +73,10 @@ export function useRealtime<T>(
         console.log(`Enabling realtime for table: ${validatedTable}`);
         
         // Cast to ValidTableName for type safety
-        const tableNameForQuery = castToValidTableName(validatedTable);
+        const safeTable = fromSafeTable(validatedTable);
         
         await supabase.rpc('enable_realtime_for_table', { 
-          table_name: tableNameForQuery
+          table_name: safeTable
         });
       } catch (error) {
         console.warn(`Error enabling realtime for ${validatedTable}:`, error);
@@ -94,14 +94,14 @@ export function useRealtime<T>(
       console.log(`Setting up real-time subscription to ${channelName}`);
       
       // Cast to ValidTableName for type safety
-      const tableNameForQuery = castToValidTableName(validatedTable);
+      const safeTable = fromSafeTable(validatedTable);
       
       const newChannel = supabase
         .channel(channelName)
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',
-          table: tableNameForQuery
+          table: safeTable
         }, payload => {
           console.log(`Real-time update received for ${validatedTable}:`, payload);
           
@@ -112,8 +112,9 @@ export function useRealtime<T>(
                 const freshData = await fetchFunction();
                 setData(freshData);
               } else {
+                const safeTableForQuery = fromSafeTable(validatedTable);
                 const { data: supabaseData, error: supabaseError } = await supabase
-                  .from(tableNameForQuery)
+                  .from(safeTableForQuery)
                   .select(columns.join(','));
                 
                 if (supabaseError) throw supabaseError;
@@ -159,10 +160,10 @@ export function useRealtime<T>(
         }
         
         // Cast to ValidTableName for type safety
-        const tableNameForQuery = castToValidTableName(validatedTable);
+        const safeTable = fromSafeTable(validatedTable);
         
         const { data: supabaseData, error: supabaseError } = await supabase
-          .from(tableNameForQuery)
+          .from(safeTable)
           .select(columns.join(','));
         
         if (supabaseError) throw supabaseError;

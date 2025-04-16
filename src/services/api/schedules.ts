@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Route } from "./routes";
 import { Bus } from "./buses";
@@ -15,6 +14,10 @@ export type Schedule = {
   is_active: boolean | null;
   created_at: string;
   updated_at: string;
+};
+
+// Enhanced types that include related data
+export type ScheduleWithRelations = Schedule & {
   routes?: Route;
   buses?: Bus;
 };
@@ -30,16 +33,10 @@ export const fetchSchedules = async (date?: string) => {
       .select(`
         *,
         routes (
-          id,
-          name,
-          origin,
-          destination
+          *
         ),
         buses (
-          id,
-          registration_number,
-          model,
-          capacity
+          *
         )
       `);
     
@@ -63,7 +60,7 @@ export const fetchSchedules = async (date?: string) => {
     }
     
     console.log("Fetched schedules:", data);
-    return data;
+    return data as ScheduleWithRelations[];
   } catch (err) {
     console.error("Error in fetchSchedules:", err);
     throw err;

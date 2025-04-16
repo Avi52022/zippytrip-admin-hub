@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, isValidTableName, castToValidTableName } from "@/utils/tableTypes";
+import { ValidTableName, isValidTableName, castToValidTableName, fromSafeTable } from "@/utils/tableTypes";
 
 // Function to enable realtime for a table
 export const enableRealtimeForTable = async (tableName: string) => {

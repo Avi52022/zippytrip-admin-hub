@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, asValidTableName } from "@/utils/tableTypes";
-import { Schedule } from "./schedules";
+import { ValidTableName, asValidTableName, fromSafeTable } from "@/utils/tableTypes";
+import { Schedule, ScheduleWithRelations } from "./schedules";
 
 // Type definitions
 export type Booking = {
@@ -17,38 +16,36 @@ export type Booking = {
   payment_id: string | null;
   created_at: string;
   updated_at: string;
-  schedules?: Schedule;
+};
+
+// Enhanced type with related data
+export type BookingWithRelations = Booking & {
+  schedules?: ScheduleWithRelations;
 };
 
 export type BookingInsert = Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'schedules'>;
 export type BookingUpdate = Partial<BookingInsert>;
 
-export const fetchBookings = async () => {
+export const fetchBookings = async (): Promise<BookingWithRelations[]> => {
+  const safeTable = fromSafeTable('bookings');
   const { data, error } = await supabase
-    .from(asValidTableName('bookings'))
+    .from(safeTable)
     .select(`
       *,
       schedules (
-        id,
-        departure_time,
-        arrival_time,
+        *,
         routes (
-          id,
-          name,
-          origin,
-          destination
+          *
         ),
         buses (
-          id,
-          registration_number,
-          model
+          *
         )
       )
     `)
     .order('created_at', { ascending: false });
   
   if (error) throw error;
-  return data;
+  return data as BookingWithRelations[];
 };
 
 export const getUserBookings = async (userId: string) => {

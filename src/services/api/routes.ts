@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, asValidTableName } from "@/utils/tableTypes";
+import { ValidTableName, asValidTableName, fromSafeTable } from "@/utils/tableTypes";
 
 // Type definitions
 export type Route = {
@@ -15,9 +14,14 @@ export type Route = {
   updated_at: string;
 };
 
-// Making is_active optional in RouteInsert to match database schema
-export type RouteInsert = Omit<Route, 'id' | 'created_at' | 'updated_at'> & {
+// Make is_active optional in RouteInsert to match database schema default value
+export type RouteInsert = Omit<
+  Route, 
+  'id' | 'created_at' | 'updated_at' | 'is_active' | 'distance' | 'duration'
+> & {
   is_active?: boolean | null;
+  distance?: number | null;
+  duration?: number | null;
 };
 
 export type RouteUpdate = Partial<Omit<Route, 'id' | 'created_at' | 'updated_at'>>;
