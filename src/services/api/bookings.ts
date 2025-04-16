@@ -1,6 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, asValidTableName, fromSafeTable } from "@/utils/tableTypes";
-import { Schedule, ScheduleWithRelations } from "./schedules";
+import { Schedule } from "./schedules";
+
+// Define simpler types to avoid circular references
+export type BookingSchedule = {
+  id: string;
+  departure_time: string;
+  arrival_time: string;
+  route_id: string;
+  bus_id: string;
+  routes?: {
+    id: string;
+    name: string;
+    origin: string;
+    destination: string;
+  };
+  buses?: {
+    id: string;
+    registration_number: string;
+    model: string;
+  };
+};
 
 // Type definitions
 export type Booking = {
@@ -11,41 +30,57 @@ export type Booking = {
   total_fare: number;
   seat_numbers: string[];
   status: string | null;
-  payment_status: string | null;
   payment_method: string | null;
   payment_id: string | null;
+  payment_status: string | null;
   created_at: string;
   updated_at: string;
 };
 
-// Enhanced type with related data
 export type BookingWithRelations = Booking & {
-  schedules?: ScheduleWithRelations;
+  schedules?: BookingSchedule;
 };
 
-export type BookingInsert = Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'schedules'>;
-export type BookingUpdate = Partial<BookingInsert>;
+export type BookingInsert = Omit<Booking, 'id' | 'created_at' | 'updated_at'>;
+export type BookingUpdate = Partial<Omit<Booking, 'id' | 'created_at' | 'updated_at'>>;
 
-export const fetchBookings = async (): Promise<BookingWithRelations[]> => {
-  const safeTable = fromSafeTable('bookings');
-  const { data, error } = await supabase
-    .from(safeTable)
-    .select(`
-      *,
-      schedules (
+export const fetchBookings = async () => {
+  console.log("Fetching bookings...");
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
         *,
-        routes (
-          *
-        ),
-        buses (
-          *
+        schedules (
+          id,
+          departure_time,
+          arrival_time,
+          routes (
+            id,
+            name,
+            origin,
+            destination
+          ),
+          buses (
+            id,
+            registration_number,
+            model
+          )
         )
-      )
-    `)
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  return data as BookingWithRelations[];
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching bookings:", error);
+      throw error;
+    }
+    
+    console.log("Fetched bookings:", data);
+    return data as BookingWithRelations[];
+  } catch (err) {
+    console.error("Error in fetchBookings:", err);
+    throw err;
+  }
 };
 
 export const getUserBookings = async (userId: string) => {

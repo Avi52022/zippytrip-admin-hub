@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon,
@@ -71,6 +70,7 @@ const Schedule = () => {
     return await fetchSchedules(formattedDate);
   };
   
+  // Use the useRealtime hook with 'schedules' as the table and fetchSchedulesForDate as the fetch function
   const { data: scheduleData, loading } = useRealtime('schedules', [], ['*'], fetchSchedulesForDate);
 
   const schedules = scheduleData.map(schedule => {
@@ -84,6 +84,7 @@ const Schedule = () => {
       status = "completed";
     }
     
+    // Use the nested route data directly from the scheduleData
     const route = schedule.routes;
     const bus = schedule.buses;
     
@@ -158,7 +159,9 @@ const Schedule = () => {
   };
 
   return (
+    
     <div className="space-y-6 animate-fade-in">
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Schedule Management</h1>
@@ -460,7 +463,7 @@ const Schedule = () => {
         onClose={() => setIsAddModalOpen(false)} 
         onSuccess={handleScheduleAdded}
       />
-    </div>
+    
   );
 };
 

@@ -38,7 +38,7 @@ export function useRealtime<T>(
           }
           
           // Cast to ValidTableName for type safety with Supabase
-          const safeTable = fromSafeTable(validatedTable);
+          const safeTable = validatedTable as ValidTableName;
           
           const { data: supabaseData, error: supabaseError } = await supabase
             .from(safeTable)
@@ -73,7 +73,7 @@ export function useRealtime<T>(
         console.log(`Enabling realtime for table: ${validatedTable}`);
         
         // Cast to ValidTableName for type safety
-        const safeTable = fromSafeTable(validatedTable);
+        const safeTable = validatedTable as ValidTableName;
         
         await supabase.rpc('enable_realtime_for_table', { 
           table_name: safeTable
@@ -94,7 +94,7 @@ export function useRealtime<T>(
       console.log(`Setting up real-time subscription to ${channelName}`);
       
       // Cast to ValidTableName for type safety
-      const safeTable = fromSafeTable(validatedTable);
+      const safeTable = validatedTable as ValidTableName;
       
       const newChannel = supabase
         .channel(channelName)
@@ -112,7 +112,7 @@ export function useRealtime<T>(
                 const freshData = await fetchFunction();
                 setData(freshData);
               } else {
-                const safeTableForQuery = fromSafeTable(validatedTable);
+                const safeTableForQuery = validatedTable as ValidTableName;
                 const { data: supabaseData, error: supabaseError } = await supabase
                   .from(safeTableForQuery)
                   .select(columns.join(','));
@@ -160,7 +160,7 @@ export function useRealtime<T>(
         }
         
         // Cast to ValidTableName for type safety
-        const safeTable = fromSafeTable(validatedTable);
+        const safeTable = validatedTable as ValidTableName;
         
         const { data: supabaseData, error: supabaseError } = await supabase
           .from(safeTable)

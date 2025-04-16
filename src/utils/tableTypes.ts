@@ -27,7 +27,12 @@ export function isValidTableName(tableName: string): tableName is ValidTableName
   );
 }
 
-// Cast a string to ValidTableName for Supabase queries - safer version
+// Safe cast function - returns the table name if valid, or undefined
+export function safeTableName(tableName: string): ValidTableName | undefined {
+  return isValidTableName(tableName) ? tableName : undefined;
+}
+
+// Cast to ValidTableName for Supabase queries - safer version
 export function castToValidTableName(tableName: string): ValidTableName {
   if (isValidTableName(tableName)) {
     return tableName;
@@ -38,10 +43,10 @@ export function castToValidTableName(tableName: string): ValidTableName {
 }
 
 // Function to safely handle table name for from() calls in Supabase
-export function fromSafeTable<T = any>(tableName: string | ValidTableName) {
+export function fromSafeTable(tableName: string | ValidTableName): ValidTableName {
   if (typeof tableName === 'string' && !isValidTableName(tableName)) {
     console.error(`Invalid table name: ${tableName}, defaulting to 'routes'`);
-    return 'routes' as ValidTableName;
+    return 'routes';
   }
   return tableName as ValidTableName;
 }
