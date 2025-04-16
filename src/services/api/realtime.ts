@@ -1,9 +1,16 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { ValidTableName, isValidTableName } from "@/utils/tableTypes";
 
 // Function to enable realtime for a table
 export const enableRealtimeForTable = async (tableName: string) => {
   try {
+    // Validate the table name
+    if (!isValidTableName(tableName)) {
+      console.error(`Invalid table name: ${tableName}`);
+      return false;
+    }
+    
     // First, make the table replica identity full to get complete data in changes
     const { error: replicaError } = await supabase.rpc(
       'set_replica_identity_full', 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { ValidTableName, asValidTableName } from '@/utils/tableTypes';
+import { ValidTableName, isValidTableName } from '@/utils/tableTypes';
 
 type FetchFunction<T> = () => Promise<T[]>;
 
@@ -17,8 +17,10 @@ export function useRealtime<T>(
   const [error, setError] = useState<Error | null>(null);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
-  // Convert table to string for safe usage
-  const tableStr = table.toString();
+  // Convert table to a validated table name
+  const validatedTable = typeof table === 'string' ? 
+    (isValidTableName(table) ? table : null) : 
+    table;
 
   // Fetch initial data
   useEffect(() => {
@@ -30,8 +32,13 @@ export function useRealtime<T>(
         if (fetchFunction) {
           fetchedData = await fetchFunction();
         } else {
+          // Only query if we have a valid table name
+          if (!validatedTable) {
+            throw new Error(`Invalid table name: ${table}`);
+          }
+          
           const { data: supabaseData, error: supabaseError } = await supabase
-            .from(tableStr)
+            .from(validatedTable)
             .select(columns.join(','));
           
           if (supabaseError) throw supabaseError;
@@ -40,7 +47,7 @@ export function useRealtime<T>(
         
         setData(fetchedData);
       } catch (err) {
-        console.error(`Error fetching data from ${tableStr}:`, err);
+        console.error(`Error fetching data from ${table}:`, err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);
@@ -48,19 +55,24 @@ export function useRealtime<T>(
     };
 
     fetchData();
-  }, [tableStr, columns.join(','), fetchFunction]);
+  }, [validatedTable, columns.join(','), fetchFunction]);
 
   // Set up real-time subscription
   useEffect(() => {
+    if (!validatedTable) {
+      console.warn(`Skipping realtime setup for invalid table: ${table}`);
+      return;
+    }
+    
     // Enable Realtime for the table if not already enabled
     const enableRealtimeForTable = async () => {
       try {
-        console.log(`Enabling realtime for table: ${tableStr}`);
+        console.log(`Enabling realtime for table: ${validatedTable}`);
         await supabase.rpc('enable_realtime_for_table', { 
-          table_name: tableStr
+          table_name: validatedTable
         });
       } catch (error) {
-        console.warn(`Error enabling realtime for ${tableStr}:`, error);
+        console.warn(`Error enabling realtime for ${validatedTable}:`, error);
         // Continue anyway as the table might already be enabled
       }
     };
@@ -69,9 +81,9 @@ export function useRealtime<T>(
     
     // Create a new real-time channel
     const setupRealtimeSubscription = () => {
-      if (!tableStr) return null;
+      if (!validatedTable) return null;
       
-      const channelName = `public:${tableStr}`;
+      const channelName = `public:${validatedTable}`;
       console.log(`Setting up real-time subscription to ${channelName}`);
       
       const newChannel = supabase
@@ -79,9 +91,9 @@ export function useRealtime<T>(
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',
-          table: tableStr
+          table: validatedTable
         }, payload => {
-          console.log(`Real-time update received for ${tableStr}:`, payload);
+          console.log(`Real-time update received for ${validatedTable}:`, payload);
           
           const handleChange = async () => {
             try {
@@ -91,21 +103,21 @@ export function useRealtime<T>(
                 setData(freshData);
               } else {
                 const { data: supabaseData, error: supabaseError } = await supabase
-                  .from(tableStr)
+                  .from(validatedTable)
                   .select(columns.join(','));
                 
                 if (supabaseError) throw supabaseError;
                 setData(supabaseData as T[]);
               }
             } catch (err) {
-              console.error(`Error updating data after real-time event on ${tableStr}:`, err);
+              console.error(`Error updating data after real-time event on ${validatedTable}:`, err);
             }
           };
           
           handleChange();
         })
         .subscribe(status => {
-          console.log(`Real-time subscription to ${tableStr} status:`, status);
+          console.log(`Real-time subscription to ${validatedTable} status:`, status);
         });
       
       return newChannel;
@@ -117,11 +129,11 @@ export function useRealtime<T>(
     // Cleanup subscription on unmount
     return () => {
       if (newChannel) {
-        console.log(`Removing real-time subscription to ${tableStr}`);
+        console.log(`Removing real-time subscription to ${validatedTable}`);
         supabase.removeChannel(newChannel);
       }
     };
-  }, [tableStr, columns.join(','), fetchFunction]);
+  }, [validatedTable, columns.join(','), fetchFunction]);
 
   // Expose reload function for manual refresh
   const reload = async () => {
@@ -132,8 +144,12 @@ export function useRealtime<T>(
       if (fetchFunction) {
         freshData = await fetchFunction();
       } else {
+        if (!validatedTable) {
+          throw new Error(`Invalid table name: ${table}`);
+        }
+        
         const { data: supabaseData, error: supabaseError } = await supabase
-          .from(tableStr)
+          .from(validatedTable)
           .select(columns.join(','));
         
         if (supabaseError) throw supabaseError;
@@ -142,7 +158,7 @@ export function useRealtime<T>(
       
       setData(freshData);
     } catch (err) {
-      console.error(`Error reloading data from ${tableStr}:`, err);
+      console.error(`Error reloading data from ${table}:`, err);
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);

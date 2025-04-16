@@ -35,12 +35,23 @@ interface RoutePerformance {
   passengers: number;
 }
 
+// Define specific types for data returned by each API
+type RouteData = Database['public']['Tables']['routes']['Row'];
+type BusData = Database['public']['Tables']['buses']['Row'];
+type ScheduleData = Database['public']['Tables']['schedules']['Row'] & {
+  routes?: RouteData;
+  buses?: BusData;
+};
+type BookingData = Database['public']['Tables']['bookings']['Row'] & {
+  schedules?: ScheduleData;
+};
+
 const Dashboard = () => {
-  // Use real-time hooks for all our data
-  const { data: routes } = useRealtime<Database['public']['Tables']['routes']['Row']>('routes', [], ['*'], fetchRoutes);
-  const { data: buses } = useRealtime<Database['public']['Tables']['buses']['Row']>('buses', [], ['*'], fetchBuses);
-  const { data: schedules } = useRealtime('schedules', [], ['*'], () => fetchSchedules());
-  const { data: bookings } = useRealtime('bookings', [], ['*'], fetchBookings);
+  // Use real-time hooks for all our data with specific types
+  const { data: routes } = useRealtime<RouteData>('routes', [], ['*'], fetchRoutes);
+  const { data: buses } = useRealtime<BusData>('buses', [], ['*'], fetchBuses);
+  const { data: schedules } = useRealtime<ScheduleData>('schedules', [], ['*'], () => fetchSchedules());
+  const { data: bookings } = useRealtime<BookingData>('bookings', [], ['*'], fetchBookings);
 
   // Calculate revenue data based on bookings
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
@@ -49,7 +60,7 @@ const Dashboard = () => {
     if (bookings && bookings.length > 0) {
       // Group bookings by month and sum the total_fare
       const revenueByMonth = bookings.reduce<Record<string, number>>((acc, booking) => {
-        const date = new Date(booking.booking_date);
+        const date = new Date(booking.created_at); // Use created_at instead of booking_date
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const month = monthNames[date.getMonth()];
         
@@ -97,7 +108,7 @@ const Dashboard = () => {
     if (bookings && bookings.length > 0) {
       // Group bookings by day of week and count passengers
       const passengersByDay = bookings.reduce<Record<string, number>>((acc, booking) => {
-        const date = new Date(booking.booking_date);
+        const date = new Date(booking.created_at); // Use created_at instead of booking_date
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const day = dayNames[date.getDay()];
         
@@ -141,22 +152,25 @@ const Dashboard = () => {
       const performanceByRoute: Record<string, RoutePerformance> = {};
       
       bookings.forEach(booking => {
-        const schedule = booking.schedules;
-        if (!schedule) return;
+        // Skip if we don't have schedules data for this booking
+        if (!booking.schedules) return;
         
-        const route = schedule.routes;
-        if (!route) return;
+        // Skip if the route information is missing
+        if (!booking.schedules.routes) return;
         
-        if (!performanceByRoute[route.id]) {
-          performanceByRoute[route.id] = {
+        const routeId = booking.schedules.route_id;
+        const route = booking.schedules.routes;
+        
+        if (!performanceByRoute[routeId]) {
+          performanceByRoute[routeId] = {
             name: `${route.origin}-${route.destination}`,
             revenue: 0,
             passengers: 0
           };
         }
         
-        performanceByRoute[route.id].revenue += Number(booking.total_fare);
-        performanceByRoute[route.id].passengers += booking.seat_numbers?.length || 1;
+        performanceByRoute[routeId].revenue += Number(booking.total_fare);
+        performanceByRoute[routeId].passengers += booking.seat_numbers?.length || 1;
       });
 
       // Convert to array and sort by revenue
