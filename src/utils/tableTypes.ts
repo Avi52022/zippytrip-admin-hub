@@ -26,3 +26,13 @@ export function isValidTableName(tableName: string): tableName is ValidTableName
     tableName === 'user_profiles'
   );
 }
+
+// Cast a string to ValidTableName for Supabase queries
+export function castToValidTableName(tableName: string): ValidTableName {
+  if (isValidTableName(tableName)) {
+    return tableName;
+  }
+  console.error(`Invalid table name: ${tableName}`);
+  // Default to 'routes' or throw error depending on your error handling strategy
+  return 'routes';
+}

@@ -15,10 +15,11 @@ export type Route = {
   updated_at: string;
 };
 
-// Making is_active optional to match the database schema
+// Making is_active optional in RouteInsert to match database schema
 export type RouteInsert = Omit<Route, 'id' | 'created_at' | 'updated_at'> & {
   is_active?: boolean | null;
 };
+
 export type RouteUpdate = Partial<Omit<Route, 'id' | 'created_at' | 'updated_at'>>;
 
 export const fetchRoutes = async () => {

@@ -49,10 +49,8 @@ const Routes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   
-  // Use the real-time hook to get route data
   const { data: routesData, loading } = useRealtime<RouteType>('routes', [], ['*'], fetchRoutes);
 
-  // Filter routes based on search term
   const filteredRoutes = routesData.filter(route => 
     route.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     route.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,9 +58,8 @@ const Routes = () => {
     route.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Stats calculation
   const activeRoutes = routesData.filter(route => route.is_active).length;
-  const maintenanceRoutes = 0; // This would come from your maintenance data
+  const maintenanceRoutes = 0;
   const inactiveRoutes = routesData.filter(route => !route.is_active).length;
 
   const handleDeleteRoute = async (id: string) => {

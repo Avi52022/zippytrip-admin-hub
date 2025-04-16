@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -19,12 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Route, Bus, MapPin } from "lucide-react";
-import { createRoute } from "@/services/api";
-import { Database } from "@/integrations/supabase/types";
-
-type RouteInsert = Database['public']['Tables']['routes']['Insert'];
+import { CheckCircle2, Route, MapPin } from "lucide-react";
+import { createRoute, RouteInsert } from "@/services/api/routes";
 
 const AddRoute = () => {
   const navigate = useNavigate();
@@ -39,7 +34,7 @@ const AddRoute = () => {
     is_active: true
   });
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -57,7 +52,10 @@ const AddRoute = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     
     try {
       // Validate inputs
@@ -67,10 +65,11 @@ const AddRoute = () => {
           description: "Please fill all required fields: name, origin, and destination.",
           variant: "destructive"
         });
-        setIsLoading(false);
+        setIsSubmitting(false);
         return;
       }
       
+      // Format data for API call
       const routeData: RouteInsert = {
         name: formData.name,
         origin: formData.origin,
@@ -80,26 +79,28 @@ const AddRoute = () => {
         is_active: formData.is_active
       };
       
-      // Save to Supabase
+      console.log("Creating route with data:", routeData);
+      
+      // Insert into Supabase
       await createRoute(routeData);
       
       // Show success toast
       toast({
-        title: "Route added",
-        description: "The route has been added successfully.",
+        title: "Route created",
+        description: "The new route has been created successfully."
       });
       
       // Redirect to routes page
       navigate("/routes");
     } catch (error) {
-      console.error("Error adding route:", error);
+      console.error("Error creating route:", error);
       toast({
         title: "Error",
-        description: "An error occurred while adding the route.",
+        description: "An error occurred while creating the route.",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   
@@ -107,13 +108,13 @@ const AddRoute = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Add New Route</h1>
-        <p className="text-muted-foreground mt-1">Create a new bus route in the system</p>
+        <p className="text-muted-foreground mt-1">Create a new bus route</p>
       </div>
       
       <Card className="bg-zippy-darkGray border-zippy-gray">
         <CardHeader>
           <CardTitle>Route Information</CardTitle>
-          <CardDescription>Enter the details for the new bus route</CardDescription>
+          <CardDescription>Define the details for the new bus route</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -134,7 +135,7 @@ const AddRoute = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="source">Origin</Label>
+                <Label htmlFor="origin">Origin</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -218,10 +219,10 @@ const AddRoute = () => {
               </Button>
               <Button 
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="bg-zippy-purple hover:bg-zippy-darkPurple"
               >
-                {isLoading ? "Adding..." : "Add Route"}
+                {isSubmitting ? "Creating..." : "Create Route"}
               </Button>
             </div>
           </form>

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, isValidTableName } from "@/utils/tableTypes";
+import { ValidTableName, isValidTableName, castToValidTableName } from "@/utils/tableTypes";
 
 // Function to enable realtime for a table
 export const enableRealtimeForTable = async (tableName: string) => {
@@ -11,10 +11,13 @@ export const enableRealtimeForTable = async (tableName: string) => {
       return false;
     }
     
+    // Convert to valid table name for type safety
+    const validTableName = castToValidTableName(tableName);
+    
     // First, make the table replica identity full to get complete data in changes
     const { error: replicaError } = await supabase.rpc(
       'set_replica_identity_full', 
-      { table_name: tableName }
+      { table_name: validTableName }
     );
     
     if (replicaError) {
@@ -24,7 +27,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     // Then add the table to the realtime publication
     const { error } = await supabase.rpc(
       'add_table_to_publication', 
-      { table_name: tableName }
+      { table_name: validTableName }
     );
     
     if (error) {
