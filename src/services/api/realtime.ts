@@ -16,7 +16,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     
     // First, make the table replica identity full to get complete data in changes
     const { error: replicaError } = await supabase.rpc(
-      'set_postgres_replica_identity_full', 
+      'set_postgres_replica_identity_full' as any, 
       { table_name: validTableName }
     );
     
@@ -26,7 +26,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     
     // Then add the table to the realtime publication
     const { error } = await supabase.rpc(
-      'add_to_realtime_publication', 
+      'add_to_realtime_publication' as any, 
       { table_name: validTableName }
     );
     
