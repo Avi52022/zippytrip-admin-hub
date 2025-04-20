@@ -63,5 +63,9 @@ export const enableRealtimeUpdates = () => {
       console.log('Bookings change received!', payload);
       return payload;
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'cancellation_notifications' }, payload => {
+      console.log('Cancellation notifications change received!', payload);
+      return payload;
+    })
     .subscribe();
 };
