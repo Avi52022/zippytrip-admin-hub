@@ -22,10 +22,13 @@ const Schedule = () => {
   
   const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
   const fetchSchedulesForDate = async () => {
-    return await fetchSchedules(formattedDate);
+    const result = await fetchSchedules(formattedDate);
+    console.log("Fetched schedules:", result); // Debug
+    return result;
   };
   
   const { data: scheduleData, loading } = useRealtime('schedules', [], ['*'], fetchSchedulesForDate);
+  console.log("scheduleData:", scheduleData, "loading:", loading); // Debug
 
   const schedules = scheduleData.map(schedule => {
     const departureTime = new Date(schedule.departure_time);
