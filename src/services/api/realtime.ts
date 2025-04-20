@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ValidTableName, isValidTableName, castToValidTableName, fromSafeTable } from "@/utils/tableTypes";
+import { ValidTableName, isValidTableName } from "@/utils/tableTypes";
 
 // Function to enable realtime for a table
 export const enableRealtimeForTable = async (tableName: string) => {
@@ -12,7 +12,7 @@ export const enableRealtimeForTable = async (tableName: string) => {
     }
     
     // Convert to valid table name for type safety
-    const validTableName = castToValidTableName(tableName);
+    const validTableName = tableName as ValidTableName;
     
     // First, make the table replica identity full to get complete data in changes
     const { error: replicaError } = await supabase.rpc(
