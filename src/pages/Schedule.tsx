@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon,
@@ -59,6 +58,7 @@ import { fetchSchedules } from "@/services/api";
 import { useRealtime } from "@/hooks/useRealtime";
 import { supabase } from "@/integrations/supabase/client";
 import AddScheduleModal from "@/components/AddScheduleModal";
+import { formatNPR } from "@/utils/formatters";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -71,7 +71,6 @@ const Schedule = () => {
     return await fetchSchedules(formattedDate);
   };
   
-  // Use the useRealtime hook with 'schedules' as the table and fetchSchedulesForDate as the fetch function
   const { data: scheduleData, loading } = useRealtime('schedules', [], ['*'], fetchSchedulesForDate);
 
   const schedules = scheduleData.map(schedule => {
@@ -85,7 +84,6 @@ const Schedule = () => {
       status = "completed";
     }
     
-    // Use the nested route data directly from the scheduleData
     const route = schedule.routes;
     const bus = schedule.buses;
     
@@ -384,7 +382,7 @@ const Schedule = () => {
                       <TableCell>{schedule.bus}</TableCell>
                       <TableCell>{schedule.driver}</TableCell>
                       <TableCell>{getStatusBadge(schedule.status)}</TableCell>
-                      <TableCell>NPR {schedule.fare.toFixed(2)}</TableCell>
+                      <TableCell>{formatNPR(schedule.fare)}</TableCell>
                       <TableCell>
                         {schedule.status !== "cancelled" ? (
                           <div className="flex items-center gap-2">
