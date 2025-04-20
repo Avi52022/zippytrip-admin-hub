@@ -33,7 +33,16 @@ const Sidebar = () => {
     label: "Settings",
     icon: <Settings size={20} />,
     path: "/settings"
-  }];
+  },
+  // --- Add this block for Cancellations ---
+  {
+    id: 7,
+    label: "Cancellations",
+    icon: <Calendar size={20} />,
+    path: "/cancellations"
+  }
+  // --- End of new block ---
+  ];
   return <SidebarWrapper>
       <SidebarHeader className="p-4 flex flex-col items-center justify-center">
         <div className="flex items-center space-x-2">
