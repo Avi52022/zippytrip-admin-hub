@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,7 +12,8 @@ import {
   MapPin,
   DollarSign,
   FileDown,
-  Loader2
+  Loader2,
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,14 +40,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchBookings } from "@/services/api";
+import { fetchBookings, updateBooking } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNPR } from "@/utils/formatters";
+import { useToast } from "@/hooks/use-toast";
 
 const Bookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [bookings, setBookings] = useState([]);
+  const { toast } = useToast();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['bookings'],
@@ -131,6 +135,28 @@ const Bookings = () => {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  // Cancel booking handler
+  const onCancelBooking = async (bookingId) => {
+    try {
+      // Set status to cancelled using Supabase
+      await updateBooking(bookingId, { status: "cancelled" });
+      toast({
+        title: "Booking Cancelled",
+        description: "Your booking has been cancelled.",
+        variant: "default",
+      });
+      // Refresh bookings
+      const refreshedData = await fetchBookings();
+      setBookings(refreshedData);
+    } catch (e) {
+      toast({
+        title: "Failed to Cancel",
+        description: e?.message || "Could not cancel the booking.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -283,6 +309,7 @@ const Bookings = () => {
                   </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -325,11 +352,29 @@ const Bookings = () => {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell className="text-center">
+                        {/* Cancel Button: Only show if not already cancelled or completed */}
+                        {(booking.status !== "cancelled" && booking.status !== "completed") && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="w-full flex items-center justify-center"
+                            onClick={() => {
+                              if (window.confirm("Are you sure you want to cancel this booking?")) {
+                                onCancelBooking(booking.id);
+                              }
+                            }}
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       {searchTerm || statusFilter !== "all" 
                         ? "No bookings match your filters"
                         : "No bookings found"}
@@ -346,3 +391,4 @@ const Bookings = () => {
 };
 
 export default Bookings;
+
