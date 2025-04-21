@@ -4,7 +4,6 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Toaster } from "@/components/ui/toaster";
 import BookingNotifications from "@/components/BookingNotifications";
 
 const Layout = () => {
@@ -24,7 +23,6 @@ const Layout = () => {
           </footer>
         </div>
       </div>
-      <Toaster />
       <BookingNotifications />
     </SidebarProvider>
   );

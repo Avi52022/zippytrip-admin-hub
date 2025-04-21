@@ -14,6 +14,7 @@ import { ScheduleStats } from "@/components/schedule/ScheduleStats";
 import { ScheduleFilters } from "@/components/schedule/ScheduleFilters";
 import { ScheduleTable } from "@/components/schedule/ScheduleTable";
 import { useToast } from "@/hooks/use-toast";
+import { ScheduleWithRelations } from "@/services/api/schedules";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -41,9 +42,9 @@ const Schedule = () => {
     }
   };
   
-  const { data: scheduleData, loading, refetch } = useRealtime(
+  const { data: scheduleData, loading, error, reload } = useRealtime<ScheduleWithRelations>(
     'schedules',
-    [manualRefreshTrigger, formattedDate],
+    [],
     ['*'],
     fetchSchedulesForDate
   );
@@ -137,10 +138,10 @@ const Schedule = () => {
       </div>
 
       <ScheduleStats
-        todaySchedules={todaySchedules}
-        scheduledCount={scheduledCount}
-        inTransitCount={inTransitCount}
-        completedCount={completedCount}
+        todaySchedules={schedules.filter(s => s.date === format(new Date(), "yyyy-MM-dd")).length}
+        scheduledCount={schedules.filter(s => s.status === "scheduled").length}
+        inTransitCount={schedules.filter(s => s.status === "in-transit").length}
+        completedCount={schedules.filter(s => s.status === "completed").length}
       />
 
       <ScheduleFilters
@@ -157,8 +158,22 @@ const Schedule = () => {
           <div className="overflow-x-auto">
             <ScheduleTable 
               loading={loading} 
-              schedules={filteredSchedules} 
-              onRefresh={() => setManualRefreshTrigger(prev => prev + 1)}
+              schedules={schedules.filter((schedule) => {
+                const matchesDate = date 
+                  ? schedule.date === format(date, "yyyy-MM-dd") 
+                  : true;
+                
+                const matchesSearch = schedule.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  schedule.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  schedule.bus.toLowerCase().includes(searchQuery.toLowerCase());
+                
+                const matchesStatus = statusFilter === "all" 
+                  ? true 
+                  : schedule.status === statusFilter;
+                
+                return matchesDate && matchesSearch && matchesStatus;
+              })} 
+              onRefresh={() => reload()}
             />
           </div>
         </CardContent>
@@ -167,7 +182,14 @@ const Schedule = () => {
       <AddScheduleModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        onSuccess={handleScheduleAdded} 
+        onSuccess={() => {
+          toast({
+            title: "Success",
+            description: "New schedule has been added successfully",
+            variant: "default",
+          });
+          reload();
+        }} 
       />
     </div>
   );
