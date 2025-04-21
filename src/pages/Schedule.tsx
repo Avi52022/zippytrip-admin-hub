@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Filter, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,29 +13,51 @@ import AddScheduleModal from "@/components/AddScheduleModal";
 import { ScheduleStats } from "@/components/schedule/ScheduleStats";
 import { ScheduleFilters } from "@/components/schedule/ScheduleFilters";
 import { ScheduleTable } from "@/components/schedule/ScheduleTable";
+import { useToast } from "@/hooks/use-toast";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [manualRefreshTrigger, setManualRefreshTrigger] = useState(0);
+  const { toast } = useToast();
   
   const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
+  
   const fetchSchedulesForDate = async () => {
-    const result = await fetchSchedules(formattedDate);
-    console.log("Fetched schedules:", result); // Debug
-    return result;
+    try {
+      const result = await fetchSchedules(formattedDate);
+      console.log("Fetched schedules:", result);
+      return result;
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch schedules. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
   };
   
-  const { data: scheduleData, loading } = useRealtime('schedules', [], ['*'], fetchSchedulesForDate);
-  console.log("scheduleData:", scheduleData, "loading:", loading); // Debug
+  const { data: scheduleData, loading, refetch } = useRealtime(
+    'schedules',
+    [manualRefreshTrigger, formattedDate],
+    ['*'],
+    fetchSchedulesForDate
+  );
+  
+  console.log("scheduleData:", scheduleData, "loading:", loading);
 
   const schedules = scheduleData.map(schedule => {
     const departureTime = new Date(schedule.departure_time);
     const arrivalTime = new Date(schedule.arrival_time);
     
     let status = "scheduled";
-    if (departureTime <= new Date() && arrivalTime >= new Date()) {
+    if (schedule.cancelled_at) {
+      status = "cancelled";
+    } else if (departureTime <= new Date() && arrivalTime >= new Date()) {
       status = "in-transit";
     } else if (arrivalTime < new Date()) {
       status = "completed";
@@ -56,7 +78,8 @@ const Schedule = () => {
       status,
       bookedSeats: bus ? (bus.capacity - schedule.available_seats) : 0,
       totalSeats: bus ? bus.capacity : 0,
-      fare: schedule.fare
+      fare: schedule.fare,
+      cancellationReason: schedule.cancellation_reason
     };
   });
 
@@ -80,6 +103,16 @@ const Schedule = () => {
   const scheduledCount = schedules.filter(s => s.status === "scheduled").length;
   const inTransitCount = schedules.filter(s => s.status === "in-transit").length;
   const completedCount = schedules.filter(s => s.status === "completed").length;
+  
+  // Handle successful schedule addition
+  const handleScheduleAdded = () => {
+    toast({
+      title: "Success",
+      description: "New schedule has been added successfully",
+      variant: "default",
+    });
+    setManualRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -89,7 +122,7 @@ const Schedule = () => {
           <p className="text-muted-foreground mt-1">Manage your bus trips and schedules</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button /* variant="outline" */ className="bg-zippy-darkGray border-zippy-gray">
+          <Button variant="outline" className="bg-zippy-darkGray border-zippy-gray">
             <Filter className="mr-2 h-4 w-4" />
             Filter
           </Button>
@@ -122,7 +155,11 @@ const Schedule = () => {
       <Card className="bg-zippy-darkGray border-zippy-gray overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <ScheduleTable loading={loading} schedules={filteredSchedules} />
+            <ScheduleTable 
+              loading={loading} 
+              schedules={filteredSchedules} 
+              onRefresh={() => setManualRefreshTrigger(prev => prev + 1)}
+            />
           </div>
         </CardContent>
       </Card>
@@ -130,7 +167,7 @@ const Schedule = () => {
       <AddScheduleModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        onSuccess={() => {}} 
+        onSuccess={handleScheduleAdded} 
       />
     </div>
   );
