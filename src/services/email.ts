@@ -1,23 +1,19 @@
-import { toast } from "@/hooks/use-toast";
 
+// Browser-compatible email service simulation
 export interface EmailNotification {
   to: string;
   subject: string;
   body: string;
 }
 
-// Dummy email service that simulates sending emails
+// This is a browser-compatible mock implementation that logs emails instead of sending them
 export const sendEmail = async (notification: EmailNotification): Promise<boolean> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Email notification would be sent in production:');
+  console.log('To:', notification.to);
+  console.log('Subject:', notification.subject);
+  console.log('Body:', notification.body);
   
-  console.log('Sending email:', notification);
-  
-  // For testing, always return success and show a toast
-  toast({
-    title: "Email Sent Successfully",
-    description: `Email sent to ${notification.to}`,
-  });
-  
-  return true;
+  // In a real implementation, this would use an API call to a server endpoint
+  // For now, we're simulating a successful send
+  return Promise.resolve(true);
 };
