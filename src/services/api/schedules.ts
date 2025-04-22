@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Route } from "./routes";
 import { Bus } from "./buses";
@@ -15,8 +14,6 @@ export type Schedule = {
   is_active: boolean | null;
   created_at: string;
   updated_at: string;
-  cancelled_at: string | null;
-  cancellation_reason: string | null;
 };
 
 // Enhanced types that include related data
@@ -25,7 +22,7 @@ export type ScheduleWithRelations = Schedule & {
   buses?: Bus;
 };
 
-export type ScheduleInsert = Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'routes' | 'buses' | 'cancelled_at' | 'cancellation_reason'>;
+export type ScheduleInsert = Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'routes' | 'buses'>;
 export type ScheduleUpdate = Partial<Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'routes' | 'buses'>>;
 
 export const fetchSchedules = async (date?: string) => {
@@ -35,8 +32,12 @@ export const fetchSchedules = async (date?: string) => {
       .from('schedules')
       .select(`
         *,
-        routes (*),
-        buses (*)
+        routes (
+          *
+        ),
+        buses (
+          *
+        )
       `);
     
     if (date) {
@@ -125,29 +126,11 @@ export const deleteSchedule = async (id: string) => {
 
 export const cancelSchedule = async (scheduleId: string, reason: string) => {
   try {
-    // Update the schedule directly instead of calling an edge function
-    const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from('schedules')
-      .update({
-        is_active: false,
-        cancelled_at: now,
-        cancellation_reason: reason
-      })
-      .eq('id', scheduleId)
-      .select();
+    const { data, error } = await supabase.functions.invoke('cancel-schedule', {
+      body: { scheduleId, reason }
+    });
 
     if (error) throw error;
-    
-    // Create a notification record for this cancellation
-    await supabase
-      .from('cancellation_notifications')
-      .insert({
-        schedule_id: scheduleId,
-        notification_type: 'schedule_cancellation',
-        status: 'pending'
-      });
-      
     return data;
   } catch (error) {
     console.error('Error cancelling schedule:', error);

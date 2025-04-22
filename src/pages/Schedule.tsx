@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Filter, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,52 +13,29 @@ import AddScheduleModal from "@/components/AddScheduleModal";
 import { ScheduleStats } from "@/components/schedule/ScheduleStats";
 import { ScheduleFilters } from "@/components/schedule/ScheduleFilters";
 import { ScheduleTable } from "@/components/schedule/ScheduleTable";
-import { useToast } from "@/hooks/use-toast";
-import { ScheduleWithRelations } from "@/services/api/schedules";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [manualRefreshTrigger, setManualRefreshTrigger] = useState(0);
-  const { toast } = useToast();
   
   const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
-  
   const fetchSchedulesForDate = async () => {
-    try {
-      const result = await fetchSchedules(formattedDate);
-      console.log("Fetched schedules:", result);
-      return result;
-    } catch (error) {
-      console.error("Error fetching schedules:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch schedules. Please try again.",
-        variant: "destructive",
-      });
-      return [];
-    }
+    const result = await fetchSchedules(formattedDate);
+    console.log("Fetched schedules:", result); // Debug
+    return result;
   };
   
-  const { data: scheduleData, loading, error, reload } = useRealtime<ScheduleWithRelations>(
-    'schedules',
-    [],
-    ['*'],
-    fetchSchedulesForDate
-  );
-  
-  console.log("scheduleData:", scheduleData, "loading:", loading);
+  const { data: scheduleData, loading } = useRealtime('schedules', [], ['*'], fetchSchedulesForDate);
+  console.log("scheduleData:", scheduleData, "loading:", loading); // Debug
 
   const schedules = scheduleData.map(schedule => {
     const departureTime = new Date(schedule.departure_time);
     const arrivalTime = new Date(schedule.arrival_time);
     
     let status = "scheduled";
-    if (schedule.cancelled_at) {
-      status = "cancelled";
-    } else if (departureTime <= new Date() && arrivalTime >= new Date()) {
+    if (departureTime <= new Date() && arrivalTime >= new Date()) {
       status = "in-transit";
     } else if (arrivalTime < new Date()) {
       status = "completed";
@@ -79,8 +56,7 @@ const Schedule = () => {
       status,
       bookedSeats: bus ? (bus.capacity - schedule.available_seats) : 0,
       totalSeats: bus ? bus.capacity : 0,
-      fare: schedule.fare,
-      cancellationReason: schedule.cancellation_reason
+      fare: schedule.fare
     };
   });
 
@@ -104,16 +80,6 @@ const Schedule = () => {
   const scheduledCount = schedules.filter(s => s.status === "scheduled").length;
   const inTransitCount = schedules.filter(s => s.status === "in-transit").length;
   const completedCount = schedules.filter(s => s.status === "completed").length;
-  
-  // Handle successful schedule addition
-  const handleScheduleAdded = () => {
-    toast({
-      title: "Success",
-      description: "New schedule has been added successfully",
-      variant: "default",
-    });
-    setManualRefreshTrigger(prev => prev + 1);
-  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -123,7 +89,7 @@ const Schedule = () => {
           <p className="text-muted-foreground mt-1">Manage your bus trips and schedules</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" className="bg-zippy-darkGray border-zippy-gray">
+          <Button /* variant="outline" */ className="bg-zippy-darkGray border-zippy-gray">
             <Filter className="mr-2 h-4 w-4" />
             Filter
           </Button>
@@ -138,10 +104,10 @@ const Schedule = () => {
       </div>
 
       <ScheduleStats
-        todaySchedules={schedules.filter(s => s.date === format(new Date(), "yyyy-MM-dd")).length}
-        scheduledCount={schedules.filter(s => s.status === "scheduled").length}
-        inTransitCount={schedules.filter(s => s.status === "in-transit").length}
-        completedCount={schedules.filter(s => s.status === "completed").length}
+        todaySchedules={todaySchedules}
+        scheduledCount={scheduledCount}
+        inTransitCount={inTransitCount}
+        completedCount={completedCount}
       />
 
       <ScheduleFilters
@@ -156,25 +122,7 @@ const Schedule = () => {
       <Card className="bg-zippy-darkGray border-zippy-gray overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <ScheduleTable 
-              loading={loading} 
-              schedules={schedules.filter((schedule) => {
-                const matchesDate = date 
-                  ? schedule.date === format(date, "yyyy-MM-dd") 
-                  : true;
-                
-                const matchesSearch = schedule.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  schedule.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  schedule.bus.toLowerCase().includes(searchQuery.toLowerCase());
-                
-                const matchesStatus = statusFilter === "all" 
-                  ? true 
-                  : schedule.status === statusFilter;
-                
-                return matchesDate && matchesSearch && matchesStatus;
-              })} 
-              onRefresh={() => reload()}
-            />
+            <ScheduleTable loading={loading} schedules={filteredSchedules} />
           </div>
         </CardContent>
       </Card>
@@ -182,14 +130,7 @@ const Schedule = () => {
       <AddScheduleModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        onSuccess={() => {
-          toast({
-            title: "Success",
-            description: "New schedule has been added successfully",
-            variant: "default",
-          });
-          reload();
-        }} 
+        onSuccess={() => {}} 
       />
     </div>
   );

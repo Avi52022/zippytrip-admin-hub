@@ -11,8 +11,7 @@ import {
   MapPin,
   DollarSign,
   FileDown,
-  Loader2,
-  XCircle
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchBookings, updateBooking } from "@/services/api";
+import { fetchBookings } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNPR } from "@/utils/formatters";
 
@@ -65,7 +64,7 @@ const Bookings = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen for all changes (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'bookings',
         },
@@ -83,12 +82,14 @@ const Bookings = () => {
 
   const filteredBookings = bookings
     ? bookings.filter((booking) => {
-        const matchesSearch =
+        const matchesSearch = 
           booking.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.schedules?.routes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.schedules?.routes?.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.schedules?.routes?.destination.toLowerCase().includes(searchTerm.toLowerCase());
+        
         const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
+        
         return matchesSearch && matchesStatus;
       })
     : [];
