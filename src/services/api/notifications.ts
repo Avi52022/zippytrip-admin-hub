@@ -1,15 +1,5 @@
-import nodemailer from 'nodemailer';
 
-// Configure email transporter
-const transporter = nodemailer.createTransport({
-  // Configure your email service here
-  // Example for Gmail:
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
+import { EmailNotification, sendEmail } from '../email';
 
 export const sendTripNotification = async (
   email: string,
@@ -21,7 +11,7 @@ export const sendTripNotification = async (
     departureTime: string,
     seatNumbers: string[]
   }
-) => {
+): Promise<boolean> => {
   const subjects = {
     reminder: 'Reminder: Your Upcoming Bus Trip',
     delay: 'Important: Your Bus Trip Has Been Delayed',
@@ -74,12 +64,11 @@ export const sendTripNotification = async (
     `
   };
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
+  const notification: EmailNotification = {
     to: email,
     subject: subjects[type],
-    text: messages[type]
+    body: messages[type]
   };
 
-  return transporter.sendMail(mailOptions);
+  return await sendEmail(notification);
 };

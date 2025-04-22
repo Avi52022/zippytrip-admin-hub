@@ -1,3 +1,4 @@
+
 export interface TripReminder {
   id: string;
   bookingId: string;
@@ -62,7 +63,7 @@ export const fetchTripReminders = async (): Promise<TripReminder[]> => {
   return dummyTripReminders;
 };
 
-import { sendTripNotification } from '@/services/api/notifications';
+import { sendEmail, EmailNotification } from '@/services/email';
 
 // Function to send a trip reminder
 export const sendTripReminder = async (reminderId: string): Promise<boolean> => {
@@ -73,18 +74,32 @@ export const sendTripReminder = async (reminderId: string): Promise<boolean> => 
   if (!reminder) return false;
   
   try {
-    await sendTripNotification(
-      reminder.passengerInfo.email,
-      'reminder',
-      {
-        routeName: reminder.routeDetails,
-        origin: reminder.routeDetails.split(' to ')[0],
-        destination: reminder.routeDetails.split(' to ')[1],
-        departureTime: reminder.travelDate,
-        seatNumbers: []
-      }
-    );
-    return true;
+    const routeParts = reminder.routeDetails.split(' to ');
+    const origin = routeParts[0] || '';
+    const destination = routeParts.length > 1 ? routeParts[1] : '';
+    
+    // Create email notification object
+    const notification: EmailNotification = {
+      to: reminder.passengerInfo.email,
+      subject: 'Reminder: Your Upcoming Bus Trip',
+      body: `
+Dear ${reminder.passengerInfo.name},
+
+This is a reminder for your upcoming bus trip:
+Route: ${reminder.routeDetails}
+From: ${origin}
+To: ${destination}
+Departure: ${new Date(reminder.travelDate).toLocaleString()}
+
+Please arrive at least 30 minutes before departure.
+
+Safe travels!
+ZippyTrip Team
+      `
+    };
+    
+    // Send email using the browser-compatible email service
+    return await sendEmail(notification);
   } catch (error) {
     console.error('Failed to send trip reminder:', error);
     return false;
