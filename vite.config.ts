@@ -24,11 +24,10 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true
   },
   optimizeDeps: {
-    exclude: ['@supabase/supabase-js']
+    exclude: []
   },
   define: {
     'process.env': {},
     'global': {}
   }
 }))
-
